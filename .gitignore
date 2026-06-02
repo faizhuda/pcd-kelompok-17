@@ -216,3 +216,23 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Project data & large artifacts
+data/raw/
+data/processed/
+results/models/*.h5
+results/models/*.pkl
+results/metrics/*.csv
+!results/metrics/.gitkeep
+results/figures/**/*.png
+results/figures/**/*.jpg
+!results/figures/**/.gitkeep
+
+# AI Assistants
+.claude/
+CLAUDE.md
+.clinerules
+.cursor/
+.cursorrules
+.cline/
+

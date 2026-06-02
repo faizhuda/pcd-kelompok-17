@@ -1,0 +1,4 @@
+# Additional dependencies for CNN experiments (Scenario 11+, MobileNetV2).
+# Install alongside requirements.txt:
+#   pip install -r requirements.txt -r requirements-cnn.txt
+tensorflow>=2.13,<3.0
