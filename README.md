@@ -87,5 +87,3 @@ data/raw/      # Dataset asli (read-only, tidak di-commit)
 data/processed/# Cache fitur opsional (dapat di-regenerate)
 results/       # Metrik CSV, model .pkl/.h5, figure PNG
 ```
-
-Spesifikasi lengkap: [CLAUDE.md](CLAUDE.md).
