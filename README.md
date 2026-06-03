@@ -5,38 +5,39 @@ Klasifikasi binary **fresh** vs **rotten** dengan pipeline klasik (SVM/RF) dan C
 
 ---
 
-## Jalankan di Google Colab (Rekomendasi)
+## Jalankan di Kaggle Notebooks (Rekomendasi)
 
-Semua notebook sudah dilengkapi sel setup otomatis untuk Google Colab.
+Semua notebook sudah dilengkapi **setup cell otomatis untuk Kaggle** (clone repo +
+deteksi dataset, nol konfigurasi). Panduan lengkap: **[KAGGLE_PLAN.md](KAGGLE_PLAN.md)**.
 
-### Persiapan sekali saja
+### Persiapan (sekali, oleh koordinator)
+- Pastikan repo GitHub ini **public**.
+- Buat satu **Kaggle Dataset** `pcd-kelompok-17-results` (wadah hasil training
+  bersama), lalu tambahkan anggota lain sebagai *collaborator*.
 
-**1. Upload proyek ke Google Drive**
-- Zip folder `pcd-kelompok-17` (kecuali `data/raw/` — biarkan diunduh dari Kaggle)
-- Upload dan extract ke `My Drive/pcd-kelompok-17/`
+### Alur tim 5 orang: 1 Runner, 4 Konsumen
+- **Runner (1 orang)** menjalankan pipeline penuh (`01 → 02 → 03`), lalu
+  publikasikan hasil ke Dataset bersama.
+- **Anggota lain** cukup attach Dataset bersama → jalankan `04` untuk analisis &
+  laporan, **tanpa training**.
 
-**2. Simpan Kaggle API key ke Drive**
-- Buka [kaggle.com/settings](https://www.kaggle.com/settings) → API → **Create New Token**
-- Simpan `kaggle.json` ke Google Drive: `My Drive/.kaggle/kaggle.json`
+### Menjalankan sebuah notebook
+1. **Create → New Notebook**, lalu panel kanan **Settings → Internet on**.
+2. **+ Add Data** → cari `fruit and vegetable disease healthy vs rotten` → **Add**.
+   (Notebook 03/04: attach juga output/Dataset hasil notebook sebelumnya.)
+3. **File → Import Notebook** → pilih `.ipynb` dari repo ini.
+4. Jalankan **berurutan dari atas**. Setup cell meng-clone repo & menyiapkan `src/`.
 
-### Urutan notebook (wajib berurutan)
+| # | Notebook | Accelerator | Estimasi | Menghasilkan |
+|---|----------|-------------|----------|--------------|
+| 1 | `01_eda.ipynb` | CPU | ~20 menit | EDA + split (deterministik) |
+| 2 | `02_experiments_classical.ipynb` | CPU | ~4–8 jam (Save & Run All) | `scenario_01–10.csv`, model S6 & S10 |
+| 3 | `03_experiments_cnn.ipynb` | **GPU P100** | ~2–3 jam | `scenario_11.csv`, model MobileNetV2 |
+| 4 | `04_results_summary.ipynb` | CPU | ~5 menit | Tabel 3, semua plot |
 
-Buka setiap notebook di Colab, pilih **Runtime → Change runtime type → T4 GPU**, lalu jalankan semua sel dari atas ke bawah.
-
-| # | Notebook | Yang dihasilkan | Runtime |
-|---|----------|-----------------|---------|
-| 1 | `01_eda.ipynb` | `data/splits.json` | ~20 menit |
-| 2 | `02_experiments_classical.ipynb` | `results/metrics/scenario_01–10.csv`, model S6 & S10 | ~4–8 jam (CPU) |
-| 3 | `03_experiments_cnn.ipynb` | `results/metrics/scenario_11.csv`, model MobileNetV2 | ~2–3 jam (GPU) |
-| 4 | `04_results_summary.ipynb` | Tabel 3, semua plot & visualisasi | ~5 menit |
-
-> **Catatan:** Notebook 02 harus selesai sebelum 03 (notebook 03 memerlukan model S6).  
-> Notebook 03 harus selesai sebelum 04 dapat menampilkan tabel lengkap.
-
-**Anti-disconnect Colab** — jalankan di browser console saat training berlangsung:
-```javascript
-setInterval(() => document.querySelector('colab-connect-button')?.click(), 60000)
-```
+> **Catatan:** Notebook 02 harus selesai sebelum 03 (butuh model S6); 03 sebelum 04.
+> Hand-off antar-notebook: **+ Add Data → Your Work / Dataset bersama** (auto-restore
+> oleh setup cell). Split tidak perlu dioper — di-regenerate deterministik tiap sesi.
 
 ---
 
@@ -61,8 +62,9 @@ python scripts/create_sample_data.py
 python scripts/smoke_test.py
 ```
 
-Untuk dataset lengkap, tambahkan API key Kaggle ke `~/.kaggle/kaggle.json`  
-lalu set `DOWNLOAD_DATASET = True` di notebook 01.
+Untuk mengunduh dataset lengkap secara lokal, tambahkan API key Kaggle ke
+`~/.kaggle/kaggle.json` lalu panggil `download_kaggle_dataset()` dari `src/utils.py`.
+(Di Kaggle Notebooks tidak perlu ini — dataset cukup di-*attach*.)
 
 ---
 
