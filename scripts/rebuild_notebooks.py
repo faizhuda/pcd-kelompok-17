@@ -1,4 +1,4 @@
-"""Rebuild all 4 notebooks with Google Colab setup cells."""
+"""Rebuild all 4 notebooks with Kaggle Notebooks setup cells."""
 import json
 import uuid
 from pathlib import Path
@@ -50,31 +50,57 @@ def make_nb(cells):
     }
 
 
-# ── Sel setup yang sama untuk semua notebook ─────────────────────────────
-COLAB_SETUP = code_cell(
-    "# Google Colab Setup\n"
-    "# Jalankan sel ini PERTAMA di setiap session Colab baru.\n"
-    "import os, sys\n"
+# ── Sel setup Kaggle (sama untuk semua notebook) ─────────────────────────
+KAGGLE_SETUP = code_cell(
+    "# ============================================================\n"
+    "# Setup cell - Kaggle Notebooks (Kaggle-only). Jalankan PALING ATAS.\n"
+    "# Cara attach dataset: panel kanan > + Add Data > cari\n"
+    "#   'fruit and vegetable disease healthy vs rotten' > Add.\n"
+    "# ============================================================\n"
+    "import os\n"
+    "import sys\n"
+    "import shutil\n"
+    "import subprocess\n"
     "from pathlib import Path\n"
     "\n"
-    'IN_COLAB = "COLAB_RELEASE_TAG" in os.environ\n'
-    "\n"
-    "if IN_COLAB:\n"
-    "    from google.colab import drive\n"
-    "    drive.mount('/content/drive')\n"
-    "    # Sesuaikan jika nama folder di Google Drive berbeda\n"
-    "    PROJECT_PATH = '/content/drive/MyDrive/pcd-kelompok-17'\n"
-    "    os.chdir(PROJECT_PATH)\n"
-    "    sys.path.insert(0, PROJECT_PATH)\n"
-    "    print('Setup selesai. Project:', PROJECT_PATH)\n"
+    "# 1. Clone repo dari GitHub (atau pull jika sudah ada di sesi ini)\n"
+    'REPO_URL = "https://github.com/faizhuda/pcd-kelompok-17.git"\n'
+    'PROJECT_DIR = Path("/kaggle/working/pcd-kelompok-17")\n'
+    "if not PROJECT_DIR.exists():\n"
+    '    subprocess.run(["git", "clone", "--depth", "1", REPO_URL, str(PROJECT_DIR)], check=True)\n'
     "else:\n"
-    "    print('Lokal - skip mount Drive.')\n"
-)
-
-INSTALL_CELL = code_cell(
-    "# Install dependencies - jalankan sekali per session Colab\n"
-    "%pip install -q opencv-python-headless scipy scikit-image scikit-learn"
-    " statsmodels matplotlib seaborn pandas tqdm joblib kagglehub tensorflow\n"
+    '    subprocess.run(["git", "-C", str(PROJECT_DIR), "pull", "--ff-only"], check=False)\n'
+    "\n"
+    "# 2. Working directory ke root project + tambah ke sys.path\n"
+    "os.chdir(PROJECT_DIR)\n"
+    "if str(PROJECT_DIR) not in sys.path:\n"
+    "    sys.path.insert(0, str(PROJECT_DIR))\n"
+    "\n"
+    "# 3. Dependency inti SUDAH pre-installed di Kaggle -> tidak ada pip install.\n"
+    "\n"
+    "# 4. Dataset gambar (read-only, hasil + Add Data)\n"
+    'RAW_DATA_DIR = Path("/kaggle/input/fruit-and-vegetable-disease-healthy-vs-rotten")\n'
+    'assert RAW_DATA_DIR.exists(), "Attach dataset: + Add Data > cari nama dataset > Add."\n'
+    "\n"
+    "# 5. Auto-restore hasil notebook sebelumnya (untuk notebook 03 & 04).\n"
+    "#    Attach output run lama via: + Add Data > Your Work / Dataset bersama.\n"
+    "def restore_previous_outputs():\n"
+    "    restored = []\n"
+    '    for inp in Path("/kaggle/input").glob("*"):\n'
+    '        repo = inp / "pcd-kelompok-17"\n'
+    "        if not repo.is_dir():\n"
+    "            continue\n"
+    '        for sub in ("results", "data/processed"):\n'
+    "            src_dir = repo / sub\n"
+    "            if src_dir.exists():\n"
+    "                shutil.copytree(src_dir, PROJECT_DIR / sub, dirs_exist_ok=True)\n"
+    "                restored.append(f'{inp.name}/{sub}')\n"
+    "    return restored\n"
+    "\n"
+    "restored = restore_previous_outputs()\n"
+    'print("Project :", PROJECT_DIR)\n'
+    'print("Dataset :", RAW_DATA_DIR)\n'
+    'print("Restore :", restored or "(mulai dari nol)")\n'
 )
 
 NEW_ROOT = (
@@ -82,8 +108,8 @@ NEW_ROOT = (
     "import sys\n"
     "from pathlib import Path\n"
     "\n"
-    '_in_colab = "COLAB_RELEASE_TAG" in os.environ\n'
-    "ROOT = Path.cwd() if _in_colab else Path.cwd().parent\n"
+    "# Setup cell sudah chdir ke PROJECT_DIR & menambah sys.path (Kaggle-only).\n"
+    'ROOT = Path("/kaggle/working/pcd-kelompok-17")\n'
     "if str(ROOT) not in sys.path:\n"
     "    sys.path.insert(0, str(ROOT))\n"
     "\n"
@@ -101,8 +127,7 @@ nb01 = make_nb(
             "Distribusi dataset, visualisasi sampel, pemeriksaan imbalance,"
             " dan pembuatan split stratified."
         ),
-        COLAB_SETUP,
-        INSTALL_CELL,
+        KAGGLE_SETUP,
         code_cell(
             NEW_ROOT
             + "import matplotlib.pyplot as plt\n"
@@ -111,7 +136,6 @@ nb01 = make_nb(
             "\n"
             "from src.preprocessing import check_integrity\n"
             "from src.utils import (\n"
-            "    KAGGLE_DATASET_SLUG,\n"
             "    build_dataset_index,\n"
             "    get_project_paths,\n"
             "    make_splits,\n"
@@ -124,31 +148,9 @@ nb01 = make_nb(
             "paths\n"
         ),
         code_cell(
-            "import shutil\n"
-            "\n"
-            "import kagglehub\n"
-            "\n"
-            "# True  = unduh dari Kaggle (default untuk Colab)\n"
-            "# False = pakai data yang sudah ada di data/raw/\n"
-            "DOWNLOAD_DATASET = True\n"
-            "\n"
-            "if DOWNLOAD_DATASET:\n"
-            '    _in_colab = "COLAB_RELEASE_TAG" in os.environ\n'
-            "    if _in_colab:\n"
-            "        # Simpan kaggle.json di Google Drive: MyDrive/.kaggle/kaggle.json\n"
-            "        _kaggle_src = Path('/content/drive/MyDrive/.kaggle/kaggle.json')\n"
-            "        _kaggle_dst = Path('/root/.kaggle/kaggle.json')\n"
-            "        _kaggle_dst.parent.mkdir(exist_ok=True)\n"
-            "        shutil.copy2(_kaggle_src, _kaggle_dst)\n"
-            "        _kaggle_dst.chmod(0o600)\n"
-            "        print('Kaggle API key siap dari Drive')\n"
-            "\n"
-            "    kaggle_path = Path(kagglehub.dataset_download(KAGGLE_DATASET_SLUG))\n"
-            "    print('Path to dataset:', kaggle_path)\n"
-            "    RAW_DATA_DIR = kaggle_path\n"
-            "else:\n"
-            "    RAW_DATA_DIR = paths['data_raw']\n"
-            "    print('Pakai data lokal:', RAW_DATA_DIR)\n"
+            "# RAW_DATA_DIR sudah di-set di setup cell (/kaggle/input/...).\n"
+            "# Tidak ada download: dataset Kaggle di-attach langsung (read-only).\n"
+            'print("Sumber dataset:", RAW_DATA_DIR)\n'
         ),
         code_cell(
             "df = build_dataset_index(RAW_DATA_DIR)\n"
@@ -206,8 +208,7 @@ nb02 = make_nb(
             "SVM & Random Forest dengan feature engineering manual."
             " Jalankan **berurutan** setelah `01_eda.ipynb`."
         ),
-        COLAB_SETUP,
-        INSTALL_CELL,
+        KAGGLE_SETUP,
         code_cell(
             NEW_ROOT
             + "from src.experiments import (\n"
@@ -215,11 +216,13 @@ nb02 = make_nb(
             "    run_mcnemar_pair,\n"
             "    select_best_enhancement,\n"
             ")\n"
-            "from src.utils import get_project_paths, load_splits, set_seed\n"
+            "from src.utils import build_dataset_index, get_project_paths, make_splits, set_seed\n"
             "\n"
             "set_seed(42)\n"
             "paths = get_project_paths()\n"
-            'train, val, test = load_splits(paths["splits"])\n'
+            "# Split di-regenerate dari dataset (deterministik, SEED=42) - tidak baca splits.json\n"
+            'RAW_DATA_DIR = Path("/kaggle/input/fruit-and-vegetable-disease-healthy-vs-rotten")\n'
+            "train, val, test = make_splits(build_dataset_index(RAW_DATA_DIR))\n"
             'cache_dir = paths["data_processed"]\n'
             'metrics_dir = paths["metrics"]\n'
             'figures_dir = paths["figures_confusion"]\n'
@@ -301,8 +304,7 @@ nb03 = make_nb(
             "\n"
             "MobileNetV2 two-stage fine-tuning, Grad-CAM, McNemar vs S6."
         ),
-        COLAB_SETUP,
-        INSTALL_CELL,
+        KAGGLE_SETUP,
         code_cell(
             NEW_ROOT
             + "import numpy as np\n"
@@ -325,11 +327,13 @@ nb03 = make_nb(
             "    unfreeze_last_layers,\n"
             ")\n"
             "from src.pipeline import image_to_cnn_input, process_image\n"
-            "from src.utils import get_project_paths, load_splits, read_best_enhancement, set_seed\n"
+            "from src.utils import build_dataset_index, get_project_paths, make_splits, read_best_enhancement, set_seed\n"
             "\n"
             "set_seed(42)\n"
             "paths = get_project_paths()\n"
-            'train_df, val_df, test_df = load_splits(paths["splits"])\n'
+            "# Split di-regenerate dari dataset (deterministik) - identik dengan notebook 01/02\n"
+            'RAW_DATA_DIR = Path("/kaggle/input/fruit-and-vegetable-disease-healthy-vs-rotten")\n'
+            "train_df, val_df, test_df = make_splits(build_dataset_index(RAW_DATA_DIR))\n"
             'enhancement = read_best_enhancement(paths["metrics"])\n'
             'print(f"Menggunakan enhancement E*: {enhancement}")\n'
         ),
@@ -548,8 +552,7 @@ nb04 = make_nb(
             "\n"
             "Tabel 3, plot komparatif F1, analisis segmentation failures, feature importance S10."
         ),
-        COLAB_SETUP,
-        INSTALL_CELL,
+        KAGGLE_SETUP,
         code_cell(
             NEW_ROOT
             + "import matplotlib.pyplot as plt\n"

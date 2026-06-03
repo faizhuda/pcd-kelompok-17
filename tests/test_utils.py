@@ -116,3 +116,20 @@ def test_load_splits_resolves_to_absolute(tmp_path):
 
     for fp in train["filepath"]:
         assert Path(fp).is_absolute(), f"Expected absolute path after load, got: {fp}"
+
+
+def test_parse_filepath_parts():
+    from src.utils import _parse_filepath_parts
+    
+    # Test double underscore splitting
+    assert _parse_filepath_parts(("Fruit And Vegetable Diseases Dataset", "Apple__Healthy")) == ("Apple", "fresh")
+    assert _parse_filepath_parts(("Fruit And Vegetable Diseases Dataset", "Apple__Rotten")) == ("Apple", "rotten")
+    assert _parse_filepath_parts(("Fruit And Vegetable Diseases Dataset", "Banana__Healthy")) == ("Banana", "fresh")
+    
+    # Test ignore list filtering
+    assert _parse_filepath_parts(("1.archive", "Fruit And Vegetable Diseases Dataset", "Banana__Rotten")) == ("Banana", "rotten")
+    
+    # Test standard fallbacks
+    assert _parse_filepath_parts(("Apple", "Healthy")) == ("Apple", "fresh")
+    assert _parse_filepath_parts(("Banana", "Rotten")) == ("Banana", "rotten")
+

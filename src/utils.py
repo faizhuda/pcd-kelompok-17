@@ -64,29 +64,61 @@ def set_seed(seed: int = SEED) -> None:
 def _normalize_label(token: str) -> str | None:
     """Parse 'fresh' or 'rotten' from a path component token. Returns None if unrecognised."""
     t = token.lower().strip().replace("-", " ").replace("_", " ")
-    if t in FRESH_KEYWORDS or "fresh" in t:
+    words = t.split()
+    for word in words:
+        if word in FRESH_KEYWORDS:
+            return "fresh"
+        if word in ROTTEN_KEYWORDS:
+            return "rotten"
+    if "fresh" in t:
         return "fresh"
-    if t in ROTTEN_KEYWORDS or "rotten" in t or "rot" in t.split():
+    if "rotten" in t:
         return "rotten"
     return None
 
 
 def _parse_filepath_parts(rel_parts: tuple[str, ...]) -> tuple[str, str] | None:
     """Infer (commodity, label) from path components."""
-    label = None
-    commodity_parts: list[str] = []
-
-    for part in rel_parts:
-        parsed = _normalize_label(part)
-        if parsed is not None:
-            label = parsed
-        else:
-            commodity_parts.append(part)
-
-    if label is None:
+    IGNORE_PARTS = {
+        "fruit and vegetable diseases dataset",
+        "fruit and vegetable disease healthy vs rotten",
+        "archive",
+        "dataset",
+        "1.archive",
+        "versions",
+        "1"
+    }
+    
+    filtered_parts = [p for p in rel_parts if p.lower().strip() not in IGNORE_PARTS]
+    if not filtered_parts:
         return None
 
-    commodity = " ".join(commodity_parts).strip() or rel_parts[0]
+    # 1. Try checking for "__" in any part, from right to left (most specific folder first)
+    for part in reversed(filtered_parts):
+        if "__" in part:
+            subparts = part.split("__")
+            if len(subparts) == 2:
+                comm, lbl = subparts[0], subparts[1]
+                norm_lbl = _normalize_label(lbl)
+                if norm_lbl is not None:
+                    commodity = comm.replace("_", " ").replace("-", " ").title().strip()
+                    return commodity, norm_lbl
+
+    # 2. Fallback: Parse from right to left
+    label = None
+    commodity_parts: list[str] = []
+    
+    for part in reversed(filtered_parts):
+        parsed = _normalize_label(part)
+        if parsed is not None and label is None:
+            label = parsed
+        else:
+            commodity_parts.insert(0, part)
+            
+    if label is None:
+        return None
+        
+    commodity = " ".join(commodity_parts).strip() or filtered_parts[0]
     commodity = commodity.replace("_", " ").replace("-", " ").title()
     return commodity, label
 
