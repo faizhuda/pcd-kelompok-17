@@ -224,14 +224,19 @@ def build_gradcam_model(model: Any, last_conv_layer_name: str | None = None) -> 
 
     if last_conv_layer_name is None:
         for layer in reversed(model.layers):
-            if len(layer.output_shape) == 4:
+            # Keras 3 (TF 2.16+) removed Layer.output_shape; fall back to output.shape.
+            try:
+                shape = layer.output.shape
+            except AttributeError:
+                shape = getattr(layer, "output_shape", None)
+            if shape is not None and len(shape) == 4:
                 last_conv_layer_name = layer.name
                 break
     if last_conv_layer_name is None:
         raise ValueError("Could not find a Conv layer with 4-D output in the model.")
 
     return tf.keras.models.Model(
-        [model.inputs, model.outputs],
+        model.inputs,
         [model.get_layer(last_conv_layer_name).output, model.output],
     )
 
