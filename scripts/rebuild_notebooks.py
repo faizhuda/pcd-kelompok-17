@@ -79,8 +79,21 @@ KAGGLE_SETUP = code_cell(
     "# 3. Dependency inti SUDAH pre-installed di Kaggle -> tidak ada pip install.\n"
     "\n"
     "# 4. Dataset gambar (read-only, hasil + Add Data)\n"
-    'RAW_DATA_DIR = Path("/kaggle/input/fruit-and-vegetable-disease-healthy-vs-rotten")\n'
-    'assert RAW_DATA_DIR.exists(), "Attach dataset: + Add Data > cari nama dataset > Add."\n'
+    "# Auto-detect: Kaggle bisa mount di /kaggle/input/<slug> atau\n"
+    "# /kaggle/input/datasets/<user>/<slug> tergantung cara attach.\n"
+    "_DATASET_SLUG = 'fruit-and-vegetable-disease-healthy-vs-rotten'\n"
+    "_candidates = [\n"
+    "    Path('/kaggle/input') / _DATASET_SLUG,\n"
+    "    Path('/kaggle/input/datasets/muhammad0subhan') / _DATASET_SLUG,\n"
+    "]\n"
+    "RAW_DATA_DIR = next((p for p in _candidates if p.exists()), None)\n"
+    "if RAW_DATA_DIR is None:\n"
+    "    # Fallback: cari folder mana saja di /kaggle/input yang berisi gambar dataset\n"
+    "    for _p in Path('/kaggle/input').rglob(_DATASET_SLUG):\n"
+    "        if _p.is_dir():\n"
+    "            RAW_DATA_DIR = _p\n"
+    "            break\n"
+    'assert RAW_DATA_DIR is not None, "Dataset belum di-attach. + Add Data > cari dataset > Add."\n'
     "\n"
     "# 5. Auto-restore hasil notebook sebelumnya (untuk notebook 03 & 04).\n"
     "#    Attach output run lama via: + Add Data > Your Work / Dataset bersama.\n"
@@ -221,7 +234,7 @@ nb02 = make_nb(
             "set_seed(42)\n"
             "paths = get_project_paths()\n"
             "# Split di-regenerate dari dataset (deterministik, SEED=42) - tidak baca splits.json\n"
-            'RAW_DATA_DIR = Path("/kaggle/input/fruit-and-vegetable-disease-healthy-vs-rotten")\n'
+            "# RAW_DATA_DIR sudah di-set setup cell (auto-detect path Kaggle)\n"
             "train, val, test = make_splits(build_dataset_index(RAW_DATA_DIR))\n"
             'cache_dir = paths["data_processed"]\n'
             'metrics_dir = paths["metrics"]\n'
@@ -333,7 +346,7 @@ nb03 = make_nb(
             "set_seed(42)\n"
             "paths = get_project_paths()\n"
             "# Split di-regenerate dari dataset (deterministik) - identik dengan notebook 01/02\n"
-            'RAW_DATA_DIR = Path("/kaggle/input/fruit-and-vegetable-disease-healthy-vs-rotten")\n'
+            "# RAW_DATA_DIR sudah di-set setup cell (auto-detect path Kaggle)\n"
             "train_df, val_df, test_df = make_splits(build_dataset_index(RAW_DATA_DIR))\n"
             'enhancement = read_best_enhancement(paths["metrics"])\n'
             'print(f"Menggunakan enhancement E*: {enhancement}")\n'
