@@ -220,6 +220,7 @@ __marimo__/
 # Project data & large artifacts
 data/raw/
 data/processed/
+data/splits.json
 results/models/*.h5
 results/models/*.pkl
 results/metrics/*.csv
@@ -227,6 +228,10 @@ results/metrics/*.csv
 results/figures/**/*.png
 results/figures/**/*.jpg
 !results/figures/**/.gitkeep
+
+# Scratch files & build artifacts
+scratch/
+*.zip
 
 # AI Assistants
 .claude/
