@@ -2,6 +2,7 @@
 
 Proyek KOM1328 — Pengolahan Citra Digital, IPB.  
 Klasifikasi binary **fresh** vs **rotten** dengan pipeline klasik (SVM/RF) dan CNN (MobileNetV2).
+Pipeline mencakup 12 skenario eksperimen: S1–S10 (klasik) dan S11–S12 (CNN).
 
 ---
 
@@ -32,7 +33,7 @@ deteksi dataset, nol konfigurasi). Panduan lengkap: **[KAGGLE_PLAN.md](KAGGLE_PL
 |---|----------|-------------|----------|--------------|
 | 1 | `01_eda.ipynb` | CPU | ~20 menit | EDA + split (deterministik) |
 | 2 | `02_experiments_classical.ipynb` | CPU | ~4–8 jam (Save & Run All) | `scenario_01–10.csv`, model S6 & S10 |
-| 3 | `03_experiments_cnn.ipynb` | **GPU P100** | ~2–3 jam | `scenario_11.csv`, model MobileNetV2 |
+| 3 | `03_experiments_cnn.ipynb` | **GPU P100** | ~2–3 jam | `scenario_11–12.csv`, model MobileNetV2 |
 | 4 | `04_results_summary.ipynb` | CPU | ~5 menit | Tabel 3, semua plot |
 
 > **Catatan:** Notebook 02 harus selesai sebelum 03 (butuh model S6); 03 sebelum 04.
@@ -71,10 +72,12 @@ Untuk mengunduh dataset lengkap secara lokal, tambahkan API key Kaggle ke
 ## Testing & Linting
 
 ```bash
-pytest tests/ -v          # 40 unit tests
+pytest tests/ -v          # 57 unit tests
 python scripts/smoke_test.py   # integration smoke test (tanpa dataset)
-pip install ruff && ruff check src/
+ruff check src/
 ```
+
+CI otomatis berjalan di setiap push via GitHub Actions (`.github/workflows/ci.yml`).
 
 ---
 
@@ -82,7 +85,7 @@ pip install ruff && ruff check src/
 
 ```
 src/           # Fungsi pipeline murni (tanpa side-effect I/O)
-notebooks/     # Orchestration & visualisasi (Colab-ready)
+notebooks/     # Orchestration & visualisasi (Kaggle-ready)
 tests/         # Unit tests (pytest)
 scripts/       # Utilities (sample data, smoke test, rebuild notebooks)
 data/raw/      # Dataset asli (read-only, tidak di-commit)

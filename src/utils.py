@@ -88,7 +88,7 @@ def _parse_filepath_parts(rel_parts: tuple[str, ...]) -> tuple[str, str] | None:
         "versions",
         "1"
     }
-    
+
     filtered_parts = [p for p in rel_parts if p.lower().strip() not in IGNORE_PARTS]
     if not filtered_parts:
         return None
@@ -107,17 +107,17 @@ def _parse_filepath_parts(rel_parts: tuple[str, ...]) -> tuple[str, str] | None:
     # 2. Fallback: Parse from right to left
     label = None
     commodity_parts: list[str] = []
-    
+
     for part in reversed(filtered_parts):
         parsed = _normalize_label(part)
         if parsed is not None and label is None:
             label = parsed
         else:
             commodity_parts.insert(0, part)
-            
+
     if label is None:
         return None
-        
+
     commodity = " ".join(commodity_parts).strip() or filtered_parts[0]
     commodity = commodity.replace("_", " ").replace("-", " ").title()
     return commodity, label

@@ -313,6 +313,7 @@ nb03 = make_nb(
             "\n"
             "from src.evaluate import (\n"
             "    append_significance_test,\n"
+            "    build_gradcam_model,\n"
             "    compute_metrics,\n"
             "    make_gradcam_heatmap,\n"
             "    mcnemar_test,\n"
@@ -338,13 +339,19 @@ nb03 = make_nb(
             'print(f"Menggunakan enhancement E*: {enhancement}")\n'
         ),
         code_cell(
-            "def make_dataset(df, batch_size=32, shuffle=False, do_segment=True, enhancement_method=None):\n"
+            "# Cache hasil preprocessing (SSR + segmentasi) ke disk supaya tiap citra\n"
+            "# hanya diproses SEKALI, bukan diulang setiap epoch. Pakai /kaggle/temp\n"
+            "# (lega, ephemeral). Shuffle dipindah ke tf.data agar caching tetap benar.\n"
+            "CACHE_DIR = Path('/kaggle/temp/tfcache')\n"
+            "CACHE_DIR.mkdir(parents=True, exist_ok=True)\n"
+            "\n"
+            "def make_dataset(df, batch_size=32, shuffle=False, do_segment=True,\n"
+            "                 enhancement_method=None, cache_name=None):\n"
             "    if enhancement_method is None:\n"
             "        enhancement_method = enhancement\n"
             "    def generator():\n"
             '        label_map = {"fresh": 0, "rotten": 1}\n'
-            "        work_df = df.sample(frac=1, random_state=42) if shuffle else df\n"
-            "        for _, row in work_df.iterrows():\n"
+            "        for _, row in df.iterrows():\n"
             '            out = process_image(path=row["filepath"], enhancement=enhancement_method, do_segment=do_segment)\n'
             '            if out["img"] is None:\n'
             "                continue\n"
@@ -360,17 +367,21 @@ nb03 = make_nb(
             "            tf.TensorSpec(shape=(2,), dtype=tf.float32),\n"
             "        )\n"
             "    )\n"
+            "    if cache_name is not None:\n"
+            "        dataset = dataset.cache(str(CACHE_DIR / cache_name))\n"
+            "    if shuffle:\n"
+            "        dataset = dataset.shuffle(buffer_size=2048, seed=42, reshuffle_each_iteration=True)\n"
             "    return dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)\n"
             "\n"
             "# Skenario 11: Dengan segmentasi + E*\n"
-            "train_ds_s11 = make_dataset(train_df, shuffle=True, do_segment=True)\n"
-            "val_ds_s11 = make_dataset(val_df, do_segment=True)\n"
-            "test_ds_s11 = make_dataset(test_df, do_segment=True)\n"
+            "train_ds_s11 = make_dataset(train_df, shuffle=True, do_segment=True, cache_name='train_s11')\n"
+            "val_ds_s11 = make_dataset(val_df, do_segment=True, cache_name='val_s11')\n"
+            "test_ds_s11 = make_dataset(test_df, do_segment=True, cache_name='test_s11')\n"
             "\n"
             "# Skenario 12: Tanpa segmentasi (Citra Asli) + Tanpa Penajaman (none)\n"
-            "train_ds_s12 = make_dataset(train_df, shuffle=True, do_segment=False, enhancement_method='none')\n"
-            "val_ds_s12 = make_dataset(val_df, do_segment=False, enhancement_method='none')\n"
-            "test_ds_s12 = make_dataset(test_df, do_segment=False, enhancement_method='none')\n"
+            "train_ds_s12 = make_dataset(train_df, shuffle=True, do_segment=False, enhancement_method='none', cache_name='train_s12')\n"
+            "val_ds_s12 = make_dataset(val_df, do_segment=False, enhancement_method='none', cache_name='val_s12')\n"
+            "test_ds_s12 = make_dataset(test_df, do_segment=False, enhancement_method='none', cache_name='test_s12')\n"
         ),
         code_cell(
             'y_train_labels = train_df["label"].map({"fresh": 0, "rotten": 1}).values\n'
@@ -479,11 +490,15 @@ nb03 = make_nb(
         ),
         md_cell("## Grad-CAM (Skenario 11 — Segmented)"),
         code_cell(
-            "import cv2\n"
+            "import matplotlib.pyplot as plt\n"
             "\n"
             'gradcam_dir = paths["figures_gradcam"]\n'
             "gradcam_dir.mkdir(parents=True, exist_ok=True)\n"
             'representative = ["Apple", "Banana", "Tomato"]\n'
+            "\n"
+            "# Build the Grad-CAM sub-model ONCE and reuse it across all images\n"
+            "# (constructing a new tf.keras.Model per image re-allocates the graph).\n"
+            "grad_model = build_gradcam_model(model_s11)\n"
             "\n"
             "for commodity in representative:\n"
             '    for label in ["fresh", "rotten"]:\n'
@@ -498,14 +513,10 @@ nb03 = make_nb(
             '            if out["img"] is None:\n'
             "                continue\n"
             '            x = image_to_cnn_input(out["img"])\n'
-            "            try:\n"
-            "                heatmap = make_gradcam_heatmap(model_s11, x)\n"
-            "            except Exception:\n"
-            "                continue\n"
+            "            heatmap = make_gradcam_heatmap(grad_model, x)\n"
             '            fname = Path(row["filepath"]).stem\n'
             "            save = gradcam_dir / f\"{commodity}_{label}_{fname}.png\"\n"
             "            plot_gradcam(out[\"img\"], heatmap, save_path=save)\n"
-            "            import matplotlib.pyplot as plt\n"
             "            plt.close(\"all\")\n"
         ),
         md_cell("## McNemar Significance Tests"),

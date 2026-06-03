@@ -17,6 +17,14 @@ FeatureGroups = Literal["color", "texture", "shape", "all"]
 HIST_BINS = 64
 
 
+def _foreground_mask(img_bgr: np.ndarray) -> np.ndarray | None:
+    """Return non-black binary mask, or None when foreground < FALLBACK_RATIO."""
+    mask = np.any(img_bgr != [0, 0, 0], axis=-1)
+    if mask.sum() < img_bgr.shape[0] * img_bgr.shape[1] * FALLBACK_RATIO:
+        return None
+    return mask
+
+
 def get_object_pixels(img_bgr: np.ndarray, segmented: bool = True) -> np.ndarray:
     """
     Return Nx3 BGR pixels for feature extraction.
@@ -24,11 +32,8 @@ def get_object_pixels(img_bgr: np.ndarray, segmented: bool = True) -> np.ndarray
     """
     if not segmented:
         return img_bgr.reshape(-1, 3)
-
-    mask = np.any(img_bgr != [0, 0, 0], axis=-1)
-    if mask.sum() < (img_bgr.shape[0] * img_bgr.shape[1] * FALLBACK_RATIO):
-        return img_bgr.reshape(-1, 3)
-    return img_bgr[mask]
+    mask = _foreground_mask(img_bgr)
+    return img_bgr[mask] if mask is not None else img_bgr.reshape(-1, 3)
 
 
 def _pixels_to_hsv(pixels_bgr: np.ndarray) -> np.ndarray:
@@ -85,8 +90,8 @@ def extract_glcm_features(img_bgr: np.ndarray, segmented: bool = True) -> np.nda
 
     gray = cv2.cvtColor(img_u8, cv2.COLOR_BGR2GRAY)
     if segmented:
-        mask = np.any(img_u8 != [0, 0, 0], axis=-1)
-        if mask.sum() >= gray.size * FALLBACK_RATIO:
+        mask = _foreground_mask(img_u8)
+        if mask is not None:
             gray = gray.copy()
             gray[~mask] = 0
 
@@ -115,8 +120,8 @@ def extract_lbp_features(img_bgr: np.ndarray, segmented: bool = True) -> np.ndar
 
     gray = cv2.cvtColor(img_u8, cv2.COLOR_BGR2GRAY)
     if segmented:
-        mask = np.any(img_u8 != [0, 0, 0], axis=-1)
-        if mask.sum() >= gray.size * FALLBACK_RATIO:
+        mask = _foreground_mask(img_u8)
+        if mask is not None:
             gray = gray.copy()
             gray[~mask] = 0
 
