@@ -10,6 +10,7 @@ from src.evaluate import (
     append_significance_test,
     build_gradcam_model,
     compute_metrics,
+    make_gradcam_heatmap,
     mcnemar_test,
     save_scenario_metrics,
 )
@@ -100,3 +101,38 @@ def test_build_gradcam_model_returns_two_outputs():
     conv_out, preds = grad_model(np.zeros((1, 8, 8, 3), dtype=np.float32))
     assert len(conv_out.shape) == 4
     assert preds.shape[-1] == 2
+
+
+def test_make_gradcam_heatmap_flat_model():
+    tf = pytest.importorskip("tensorflow")
+
+    inputs = tf.keras.Input(shape=(8, 8, 3))
+    x = tf.keras.layers.Conv2D(4, 3, padding="same")(inputs)
+    x = tf.keras.layers.GlobalAveragePooling2D()(x)
+    outputs = tf.keras.layers.Dense(2, activation="softmax")(x)
+    model = tf.keras.Model(inputs, outputs)
+
+    heatmap = make_gradcam_heatmap(model, np.random.rand(1, 8, 8, 3).astype(np.float32))
+    assert heatmap.ndim == 2
+    assert heatmap.shape == (8, 8)
+
+
+def test_make_gradcam_heatmap_nested_model():
+    # Regression: MobileNetV2 is wrapped as a nested model layer. Rebuilding a
+    # functional sub-model for this case raises KeyError in Keras 3; the
+    # GradientTape replay must handle it.
+    tf = pytest.importorskip("tensorflow")
+
+    base_in = tf.keras.Input(shape=(8, 8, 3))
+    base_out = tf.keras.layers.Conv2D(4, 3, padding="same")(base_in)
+    base = tf.keras.Model(base_in, base_out, name="base")
+
+    inp = tf.keras.Input(shape=(8, 8, 3))
+    x = base(inp)
+    x = tf.keras.layers.GlobalAveragePooling2D()(x)
+    out = tf.keras.layers.Dense(2, activation="softmax")(x)
+    model = tf.keras.Model(inp, out)
+
+    heatmap = make_gradcam_heatmap(model, np.random.rand(1, 8, 8, 3).astype(np.float32))
+    assert heatmap.ndim == 2
+    assert heatmap.shape == (8, 8)

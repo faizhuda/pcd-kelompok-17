@@ -327,7 +327,6 @@ nb03 = make_nb(
             "\n"
             "from src.evaluate import (\n"
             "    append_significance_test,\n"
-            "    build_gradcam_model,\n"
             "    compute_metrics,\n"
             "    make_gradcam_heatmap,\n"
             "    mcnemar_test,\n"
@@ -502,39 +501,10 @@ nb03 = make_nb(
             '                      save_path=paths["figures_confusion"] / "scenario_12.png")\n'
             "metrics_s12\n"
         ),
-        md_cell("## Grad-CAM (Skenario 11 — Segmented)"),
-        code_cell(
-            "import matplotlib.pyplot as plt\n"
-            "\n"
-            'gradcam_dir = paths["figures_gradcam"]\n'
-            "gradcam_dir.mkdir(parents=True, exist_ok=True)\n"
-            'representative = ["Apple", "Banana", "Tomato"]\n'
-            "\n"
-            "# Build the Grad-CAM sub-model ONCE and reuse it across all images\n"
-            "# (constructing a new tf.keras.Model per image re-allocates the graph).\n"
-            "grad_model = build_gradcam_model(model_s11)\n"
-            "\n"
-            "for commodity in representative:\n"
-            '    for label in ["fresh", "rotten"]:\n'
-            "        subset = test_df[\n"
-            "            (test_df[\"commodity\"].str.contains(commodity, case=False, na=False)) &\n"
-            '            (test_df["label"] == label)\n'
-            "        ]\n"
-            "        if subset.empty:\n"
-            '            subset = test_df[test_df["label"] == label].head(3)\n'
-            "        for _, row in subset.head(3).iterrows():\n"
-            '            out = process_image(path=row["filepath"], enhancement=enhancement, do_segment=True)\n'
-            '            if out["img"] is None:\n'
-            "                continue\n"
-            '            x = image_to_cnn_input(out["img"])\n'
-            "            heatmap = make_gradcam_heatmap(grad_model, x)\n"
-            '            fname = Path(row["filepath"]).stem\n'
-            "            save = gradcam_dir / f\"{commodity}_{label}_{fname}.png\"\n"
-            "            plot_gradcam(out[\"img\"], heatmap, save_path=save)\n"
-            "            plt.close(\"all\")\n"
-        ),
         md_cell("## McNemar Significance Tests"),
         code_cell(
+            "# Dijalankan SEBELUM Grad-CAM supaya hasil uji signifikansi (penting\n"
+            "# untuk laporan) tersimpan walau sel visualisasi di bawah bermasalah.\n"
             "import joblib\n"
             "\n"
             's6_path = paths["models"] / "svm_scenario_06.pkl"\n'
@@ -562,6 +532,35 @@ nb03 = make_nb(
             "    print('S11 vs S12:', stat11_12, pval11_12, conclusion11_12)\n"
             "else:\n"
             '    print("Jalankan notebook 02 terlebih dahulu untuk model S6.")\n'
+        ),
+        md_cell("## Grad-CAM (Skenario 11 — Segmented)"),
+        code_cell(
+            "import matplotlib.pyplot as plt\n"
+            "\n"
+            'gradcam_dir = paths["figures_gradcam"]\n'
+            "gradcam_dir.mkdir(parents=True, exist_ok=True)\n"
+            'representative = ["Apple", "Banana", "Tomato"]\n'
+            "\n"
+            "for commodity in representative:\n"
+            '    for label in ["fresh", "rotten"]:\n'
+            "        subset = test_df[\n"
+            "            (test_df[\"commodity\"].str.contains(commodity, case=False, na=False)) &\n"
+            '            (test_df["label"] == label)\n'
+            "        ]\n"
+            "        if subset.empty:\n"
+            '            subset = test_df[test_df["label"] == label].head(3)\n'
+            "        for _, row in subset.head(3).iterrows():\n"
+            '            out = process_image(path=row["filepath"], enhancement=enhancement, do_segment=True)\n'
+            '            if out["img"] is None:\n'
+            "                continue\n"
+            '            x = image_to_cnn_input(out["img"])\n'
+            "            # Pass the full model; make_gradcam_heatmap replays it under a\n"
+            "            # GradientTape (Keras 3-safe, handles the nested MobileNetV2 base).\n"
+            "            heatmap = make_gradcam_heatmap(model_s11, x)\n"
+            '            fname = Path(row["filepath"]).stem\n'
+            "            save = gradcam_dir / f\"{commodity}_{label}_{fname}.png\"\n"
+            "            plot_gradcam(out[\"img\"], heatmap, save_path=save)\n"
+            "            plt.close(\"all\")\n"
         ),
     ]
 )

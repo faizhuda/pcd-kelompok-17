@@ -242,26 +242,64 @@ def build_gradcam_model(model: Any, last_conv_layer_name: str | None = None) -> 
 
 
 def make_gradcam_heatmap(
-    grad_model: Any,
+    model: Any,
     img_array: np.ndarray,
     last_conv_layer_name: str | None = None,
 ) -> np.ndarray:
-    """Generate Grad-CAM heatmap for a single image (batch of 1).
+    """Generate a Grad-CAM heatmap for a single image (batch of 1).
+
+    Pass the FULL classifier model (e.g. the MobileNetV2 transfer model). The
+    heatmap is computed by replaying the network eagerly under a GradientTape
+    rather than rebuilding a functional sub-model.
+
+    Why not a functional sub-model: when the target feature map lives inside a
+    *nested* model (MobileNetV2 wrapped as a single layer), Keras 3 cannot
+    traverse `Model(model.inputs, [nested.output, model.output])` — calling it
+    raises ``KeyError`` in ``_run_through_graph``. Replaying layer-by-layer and
+    watching the intermediate tensor avoids that entirely and works on both
+    Keras 2 and Keras 3.
 
     Args:
-        grad_model: Pre-built Grad-CAM sub-model from build_gradcam_model().
-                    Pass the full Keras model here only for one-off calls — it
-                    will be wrapped internally (one-time cost).
+        model:      Trained Keras classifier. Assumed to be a linear stack of
+                    layers (Input → feature extractor → head), which is the case
+                    for ``build_mobilenetv2``.
         img_array:  Preprocessed image, shape (1, H, W, C).
+        last_conv_layer_name: Optional explicit feature-map layer name. When
+                    omitted, the last layer with a 4-D output is used.
     """
     import tensorflow as tf
 
-    # Accept a plain Keras model for convenience in one-off notebook calls.
-    if not hasattr(grad_model, "output_names") or len(grad_model.outputs) != 2:
-        grad_model = build_gradcam_model(grad_model, last_conv_layer_name)
+    x_in = tf.convert_to_tensor(img_array, dtype=tf.float32)
+    layers = list(model.layers)
+
+    # Locate the feature-map producer (last 4-D output layer, or named layer).
+    conv_index = None
+    for i, layer in enumerate(layers):
+        if last_conv_layer_name is not None and layer.name == last_conv_layer_name:
+            conv_index = i
+            break
+    if conv_index is None:
+        for i in range(len(layers) - 1, -1, -1):
+            try:
+                shape = layers[i].output.shape
+            except AttributeError:
+                shape = getattr(layers[i], "output_shape", None)
+            if shape is not None and len(shape) == 4:
+                conv_index = i
+                break
+    if conv_index is None:
+        raise ValueError("Could not find a 4-D feature-map layer for Grad-CAM.")
 
     with tf.GradientTape() as tape:
-        conv_outputs, predictions = grad_model(img_array)
+        x = x_in
+        # Skip layers[0] (the InputLayer); replay up to the feature map.
+        for layer in layers[1:conv_index + 1]:
+            x = layer(x, training=False)
+        conv_outputs = x
+        tape.watch(conv_outputs)
+        for layer in layers[conv_index + 1:]:
+            x = layer(x, training=False)
+        predictions = x
         pred_index = tf.argmax(predictions[0])
         class_channel = predictions[:, pred_index]
 
