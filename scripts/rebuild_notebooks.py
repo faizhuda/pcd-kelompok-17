@@ -98,16 +98,17 @@ KAGGLE_SETUP = code_cell(
     "# 5. Auto-restore hasil notebook sebelumnya (untuk notebook 03 & 04).\n"
     "#    Attach output run lama via: + Add Data > Your Work / Dataset bersama.\n"
     "def restore_previous_outputs():\n"
+    "    # Kaggle mounts notebook outputs di /kaggle/input/notebooks/<user>/<notebook>/\n"
+    "    # sehingga perlu rglob, bukan glob satu level.\n"
     "    restored = []\n"
-    '    for inp in Path("/kaggle/input").glob("*"):\n'
-    '        repo = inp / "pcd-kelompok-17"\n'
+    '    for repo in Path("/kaggle/input").rglob("pcd-kelompok-17"):\n'
     "        if not repo.is_dir():\n"
     "            continue\n"
     '        for sub in ("results", "data/processed"):\n'
     "            src_dir = repo / sub\n"
     "            if src_dir.exists():\n"
     "                shutil.copytree(src_dir, PROJECT_DIR / sub, dirs_exist_ok=True)\n"
-    "                restored.append(f'{inp.name}/{sub}')\n"
+    "                restored.append(str(src_dir))\n"
     "    return restored\n"
     "\n"
     "restored = restore_previous_outputs()\n"
