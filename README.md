@@ -2,7 +2,7 @@
 
 Proyek KOM1328 - Pengolahan Citra Digital, IPB.  
 Klasifikasi binary **fresh** vs **rotten** dengan pipeline klasik (SVM/RF) dan CNN (MobileNetV2).
-Pipeline mencakup 12 skenario eksperimen: S1-S10 (klasik) dan S11-S12 (CNN).
+Pipeline mencakup 11 skenario eksperimen: S1-S9 (klasik) dan S10-S11 (CNN).
 
 ---
 
@@ -32,11 +32,11 @@ deteksi dataset, nol konfigurasi). Panduan lengkap: **[KAGGLE_PLAN.md](KAGGLE_PL
 | # | Notebook | Accelerator | Estimasi | Menghasilkan |
 |---|----------|-------------|----------|--------------|
 | 1 | `01_eda.ipynb` | CPU | ~20 menit | EDA + split (deterministik) |
-| 2 | `02_experiments_classical.ipynb` | CPU | ~4-8 jam (Save & Run All) | `scenario_01-10.csv`, model S6 & S10 |
-| 3 | `03_experiments_cnn.ipynb` | **GPU P100** | ~2-3 jam | `scenario_11-12.csv`, model MobileNetV2 |
+| 2 | `02_experiments_classical.ipynb` | CPU | ~4-8 jam (Save & Run All) | `scenario_01-09.csv`, model `svm_scenario_05.pkl` & `rf_scenario_09.pkl` |
+| 3 | `03_experiments_cnn.ipynb` | **GPU P100** | ~2-3 jam | `scenario_10-11.csv`, model `mobilenetv2_s10_stage2.h5` & `mobilenetv2_s11_stage2.h5` |
 | 4 | `04_results_summary.ipynb` | CPU | ~5 menit | Tabel 3, semua plot |
 
-> **Catatan:** Notebook 02 harus selesai sebelum 03 (butuh model S6); 03 sebelum 04.
+> **Catatan:** Notebook 02 harus selesai sebelum 03 (butuh model S5); 03 sebelum 04.
 > Hand-off antar-notebook: **+ Add Data -> Your Work / Dataset bersama** (auto-restore
 > oleh setup cell). Split tidak perlu dioper - di-regenerate deterministik tiap sesi.
 
