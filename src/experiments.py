@@ -30,9 +30,10 @@ def extract_split_matrix(
     feature_groups: str,
     cache_path: Path | None = None,
     split_name: str = "train",
+    restoration: str = "ssr",
 ) -> tuple[np.ndarray, np.ndarray, pd.DataFrame]:
     """Extract features for all rows in df; optional npz cache."""
-    cache_key = f"{split_name}_{enhancement}_{do_segment}_{feature_groups}"
+    cache_key = f"{split_name}_{restoration}_{enhancement}_{do_segment}_{feature_groups}"
     # Filenames identify the rows this matrix belongs to, independent of the
     # absolute mount path. Used to detect a stale cache built for a different
     # split (which would otherwise raise IndexError or, worse, silently
@@ -64,6 +65,7 @@ def extract_split_matrix(
         feature_groups=feature_groups,
         metadata=df,
         failure_log_path=failure_log if do_segment else None,
+        restoration=restoration,
     )
     y, _ = label_encode(df.iloc[valid_idx]["label"])
     valid_df = df.iloc[valid_idx].reset_index(drop=True)
@@ -91,11 +93,11 @@ def run_classical_scenario(
     models_dir: Path,
     cache_dir: Path | None = None,
 ) -> dict[str, Any]:
-    """Train and evaluate one classical scenario (scenario_id 1–10).
+    """Train and evaluate one classical scenario (scenario_id 1–8).
 
     Raises:
-        KeyError: if scenario_id is not in SCENARIO_CONFIG (valid range: 1–10).
-            Scenario 11+ (CNN/MobileNetV2) are handled in notebooks/03_experiments_cnn.ipynb.
+        KeyError: if scenario_id is not in SCENARIO_CONFIG (classical scenarios).
+            CNN scenarios (9–10, MobileNetV2) are handled in notebooks/03_experiments_cnn.ipynb.
     """
     from src.utils import read_best_enhancement
 
@@ -104,7 +106,7 @@ def run_classical_scenario(
         raise KeyError(
             f"scenario_id={scenario_id!r} not found. "
             f"Classical scenarios are {valid[0]}–{valid[-1]}. "
-            "CNN scenarios (11+) are run directly in notebooks/03_experiments_cnn.ipynb."
+            "CNN scenarios are run directly in notebooks/03_experiments_cnn.ipynb."
         )
 
     cfg = SCENARIO_CONFIG[scenario_id].copy()
@@ -112,18 +114,19 @@ def run_classical_scenario(
     if enhancement == "best":
         enhancement = read_best_enhancement(metrics_dir)
 
+    restoration = cfg.get("restoration", "ssr")
     do_segment = cfg["segment"]
     feature_groups = cfg["features"]
     model_type = cfg["model"]
 
     X_train, y_train, train_v = extract_split_matrix(
-        train_df, enhancement, do_segment, feature_groups, cache_dir, "train"
+        train_df, enhancement, do_segment, feature_groups, cache_dir, "train", restoration
     )
     X_val, y_val, val_v = extract_split_matrix(
-        val_df, enhancement, do_segment, feature_groups, cache_dir, "val"
+        val_df, enhancement, do_segment, feature_groups, cache_dir, "val", restoration
     )
     X_test, y_test, test_v = extract_split_matrix(
-        test_df, enhancement, do_segment, feature_groups, cache_dir, "test"
+        test_df, enhancement, do_segment, feature_groups, cache_dir, "test", restoration
     )
 
     if model_type == "svm":
@@ -154,6 +157,7 @@ def run_classical_scenario(
         inference_time_ms=infer_per_img,
         n_test_samples=len(y_test),
         metrics_dir=metrics_dir,
+        restoration=restoration,
     )
 
     plot_confusion_matrix(
@@ -164,7 +168,9 @@ def run_classical_scenario(
     )
     plt_close()
 
-    if scenario_id in (6, 10):
+    # Persist the full-pipeline SVM (S5, McNemar anchor vs CNN) and the RF (S8,
+    # feature-importance analysis) so downstream notebooks can reload them.
+    if scenario_id in (5, 8):
         joblib.dump(model, models_dir / f"{'svm' if model_type == 'svm' else 'rf'}_scenario_{scenario_id:02d}.pkl")
 
     val_f1 = compute_metrics(y_val, val_pred)["f1_weighted"]
@@ -172,6 +178,7 @@ def run_classical_scenario(
     result = {
         "scenario_id": scenario_id,
         "enhancement": enhancement,
+        "restoration": restoration,
         "val_f1": val_f1,
         "test_metrics": metrics,
         "y_test": y_test,

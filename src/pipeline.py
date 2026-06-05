@@ -20,25 +20,32 @@ from src.segmentation import segment_fruit
 def process_image(
     path: str | Path | None = None,
     img_bgr: np.ndarray | None = None,
+    restoration: str = "ssr",
     enhancement: str = "none",
     do_segment: bool = False,
     feature_groups: str = "all",
     extract_feat: bool = False,
 ) -> dict[str, Any]:
     """
-    Full pipeline: preprocess → enhance → (optional) segment → (optional) features.
+    Full pipeline: preprocess → (restore) → enhance → (segment) → (features).
+
+    Stages:
+        - restoration: "ssr" applies Single-Scale Retinex illumination
+          correction; "none" gives a true raw baseline (resize only).
+        - enhancement: "none"/"clahe"/"histeq"/"gamma" on top of restoration.
 
     Provide either path or img_bgr.
 
     Returns dict with keys:
         img, mask, object_ratio, used_fallback, features (if extract_feat)
     """
+    apply_restoration = str(restoration).lower() == "ssr"
     if path is not None:
-        img = preprocess_pipeline(path)
+        img = preprocess_pipeline(path, apply_restoration=apply_restoration)
         if img is None:
             return {"img": None, "mask": None, "object_ratio": 0.0, "used_fallback": True, "features": None}
     elif img_bgr is not None:
-        img = preprocess_from_array(img_bgr)
+        img = preprocess_from_array(img_bgr, apply_restoration=apply_restoration)
     else:
         raise ValueError("Provide either path or img_bgr.")
 
@@ -104,6 +111,7 @@ def batch_extract_features(
     show_progress: bool = True,
     metadata: "pd.DataFrame | None" = None,
     failure_log_path: Path | None = None,
+    restoration: str = "ssr",
 ) -> tuple[np.ndarray, list[int]]:
     """
     Extract features for a list of image paths.
@@ -118,6 +126,7 @@ def batch_extract_features(
     for i, fp in enumerate(iterator):
         out = process_image(
             path=fp,
+            restoration=restoration,
             enhancement=enhancement,
             do_segment=do_segment,
             feature_groups=feature_groups,

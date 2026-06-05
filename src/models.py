@@ -13,8 +13,14 @@ from sklearn.svm import SVC
 from sklearn.utils.class_weight import compute_class_weight
 
 
-def build_svm_pipeline(random_state: int = 42, cv: int = 5, n_jobs: int = -1, verbose: int = 0) -> GridSearchCV:
-    """StandardScaler + SVC RBF with GridSearchCV (f1_weighted)."""
+def build_svm_pipeline(random_state: int = 42, cv: int = 3, n_jobs: int = -1, verbose: int = 0) -> GridSearchCV:
+    """StandardScaler + SVC RBF with a small GridSearchCV (f1_weighted).
+
+    The grid is intentionally compact (2 candidates x 3 folds = 6 fits). An
+    exhaustive grid over C and gamma adds hours of compute on a large dataset
+    for negligible accuracy gain — not worth it for this project, where the
+    focus is the pipeline and analysis, not squeezing out the last F1 point.
+    """
     pipeline = Pipeline(
         [
             ("scaler", StandardScaler()),
@@ -30,8 +36,8 @@ def build_svm_pipeline(random_state: int = 42, cv: int = 5, n_jobs: int = -1, ve
         ]
     )
     param_grid = {
-        "svm__C": [0.1, 1, 10, 100],
-        "svm__gamma": ["scale", "auto", 0.001, 0.01],
+        "svm__C": [1, 10],
+        "svm__gamma": ["scale"],
     }
     return GridSearchCV(
         pipeline,

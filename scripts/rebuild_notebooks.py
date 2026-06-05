@@ -217,10 +217,11 @@ nb01 = make_nb(
 nb02 = make_nb(
     [
         md_cell(
-            "# 02 — Eksperimen Klasik (Skenario 1–10)\n"
+            "# 02 — Eksperimen Klasik (Skenario 1–8)\n"
             "\n"
-            "SVM & Random Forest dengan feature engineering manual."
-            " Jalankan **berurutan** setelah `01_eda.ipynb`."
+            "SVM & Random Forest dengan feature engineering manual. Tiap skenario\n"
+            "mengubah **satu variabel** untuk isolasi efek (restorasi, enhancement,\n"
+            "segmentasi, fitur, classifier). Jalankan **berurutan** setelah `01_eda.ipynb`."
         ),
         KAGGLE_SETUP,
         code_cell(
@@ -243,7 +244,13 @@ nb02 = make_nb(
             'models_dir = paths["models"]\n'
             "print(len(train), len(val), len(test))\n"
         ),
-        md_cell("## Skenario 1–4: Perbandingan Enhancement"),
+        md_cell(
+            "## Skenario 1–4: Baseline, Restorasi (SSR), Enhancement\n"
+            "\n"
+            "- **S1** = baseline mentah (tanpa restorasi, tanpa enhancement)\n"
+            "- **S2** = + restorasi SSR (isolasi efek koreksi pencahayaan vs S1)\n"
+            "- **S3/S4** = SSR + CLAHE / gamma. E* dipilih dari S2–S4 (val F1)."
+        ),
         code_cell(
             "val_f1_map = {}\n"
             "scenario_results = {}\n"
@@ -254,16 +261,25 @@ nb02 = make_nb(
             "        sid, train, val, test,\n"
             "        metrics_dir, figures_dir, models_dir, cache_dir,\n"
             "    )\n"
-            '    val_f1_map[res["enhancement"]] = res["val_f1"]\n'
             "    scenario_results[sid] = res\n"
+            "    # E* dipilih di antara skenario ber-SSR (S2 none, S3 clahe, S4 gamma).\n"
+            "    # S1 = baseline mentah (tanpa restorasi) -> tidak ikut pemilihan enhancement.\n"
+            "    if sid >= 2:\n"
+            '        val_f1_map[res["enhancement"]] = res["val_f1"]\n'
             "    print(f\"Val F1: {res['val_f1']:.4f} | Test F1: {res['test_metrics']['f1_weighted']:.4f}\")\n"
             "\n"
             "best_enh = select_best_enhancement(val_f1_map, metrics_dir)\n"
             'print(f"\\nE* (enhancement terbaik): {best_enh}")\n'
         ),
-        md_cell("## Skenario 5–10: Segmentasi, Integrasi, Ablasi, RF"),
+        md_cell(
+            "## Skenario 5–8: Segmentasi, Ablasi Fitur, Random Forest\n"
+            "\n"
+            "- **S5** = E* + segmentasi, semua fitur, SVM (pipeline klasik penuh)\n"
+            "- **S6/S7** = ablasi fitur (warna saja / tekstur saja)\n"
+            "- **S8** = S5 dengan Random Forest (perbandingan classifier + feature importance)"
+        ),
         code_cell(
-            "for sid in range(5, 11):\n"
+            "for sid in range(5, 9):\n"
             '    print(f"\\n=== Skenario {sid} ===")\n'
             "    res = run_classical_scenario(\n"
             "        sid, train, val, test,\n"
@@ -272,31 +288,35 @@ nb02 = make_nb(
             "    scenario_results[sid] = res\n"
             "    print(f\"Test F1: {res['test_metrics']['f1_weighted']:.4f}\")\n"
         ),
-        md_cell("## Uji Signifikansi McNemar"),
+        md_cell("## Uji Signifikansi McNemar (isolasi tiap tahap)"),
         code_cell(
             "from src.utils import read_best_enhancement\n"
             "\n"
             "best_enh = read_best_enhancement(metrics_dir)\n"
-            'best_sid = {"none": 1, "clahe": 2, "histeq": 3, "gamma": 4}[best_enh]\n'
+            "# Skenario no-seg yang memakai E* (untuk isolasi efek segmentasi):\n"
+            '# none -> S2, clahe -> S3, gamma -> S4.\n'
+            'enh_noseg_sid = {"none": 2, "clahe": 3, "gamma": 4}[best_enh]\n'
             'y_true = scenario_results[1]["y_test"]\n'
             "\n"
+            "# 1. Efek restorasi SSR: S2 (ssr) vs S1 (mentah)\n"
             "run_mcnemar_pair(\n"
-            '    f"E*({best_enh}) vs S1",\n'
-            '    f"S{best_sid}", "S1",\n'
-            "    y_true,\n"
-            "    scenario_results[best_sid][\"y_pred\"],\n"
-            '    scenario_results[1]["y_pred"],\n'
-            "    metrics_dir,\n"
+            '    "S2 vs S1 (SSR)", "S2", "S1",\n'
+            '    y_true, scenario_results[2]["y_pred"], scenario_results[1]["y_pred"], metrics_dir,\n'
             ")\n"
+            "\n"
+            "# 2. Efek enhancement E*: S{E*} vs S2 (hanya bermakna bila E* != none)\n"
+            "if enh_noseg_sid != 2:\n"
+            "    run_mcnemar_pair(\n"
+            '        f"E*({best_enh}) vs S2", f"S{enh_noseg_sid}", "S2",\n'
+            '        y_true, scenario_results[enh_noseg_sid]["y_pred"], scenario_results[2]["y_pred"], metrics_dir,\n'
+            "    )\n"
+            "\n"
+            "# 3. Efek segmentasi: S5 (E*+seg) vs E* tanpa seg\n"
             "run_mcnemar_pair(\n"
-            '    "S5 vs S1", "S5", "S1",\n'
-            '    y_true, scenario_results[5]["y_pred"], scenario_results[1]["y_pred"], metrics_dir,\n'
+            '    "S5 vs E*-noseg (segmentasi)", "S5", f"S{enh_noseg_sid}",\n'
+            '    y_true, scenario_results[5]["y_pred"], scenario_results[enh_noseg_sid]["y_pred"], metrics_dir,\n'
             ")\n"
-            "run_mcnemar_pair(\n"
-            '    "S6 vs S1", "S6", "S1",\n'
-            '    y_true, scenario_results[6]["y_pred"], scenario_results[1]["y_pred"], metrics_dir,\n'
-            ")\n"
-            'print("McNemar (S11 vs S6) dijalankan di notebook 03.")\n'
+            'print("McNemar CNN (S9/S10 vs S5) dijalankan di notebook 03.")\n'
         ),
         code_cell(
             "import pandas as pd\n"
@@ -314,9 +334,11 @@ nb02 = make_nb(
 nb03 = make_nb(
     [
         md_cell(
-            "# 03 — Eksperimen CNN (Skenario 11)\n"
+            "# 03 — Eksperimen CNN (Skenario 9–10)\n"
             "\n"
-            "MobileNetV2 two-stage fine-tuning, Grad-CAM, McNemar vs S6."
+            "MobileNetV2 two-stage fine-tuning, Grad-CAM, McNemar vs S5.\n"
+            "- **S9** = SSR + E* + segmentasi (full pipeline klasik, diganti CNN)\n"
+            "- **S10** = tanpa restorasi, tanpa enhancement (baseline murni CNN vs S1 klasik)"
         ),
         KAGGLE_SETUP,
         code_cell(
@@ -352,20 +374,24 @@ nb03 = make_nb(
             'print(f"Menggunakan enhancement E*: {enhancement}")\n'
         ),
         code_cell(
-            "# Cache hasil preprocessing (SSR + segmentasi) ke disk supaya tiap citra\n"
-            "# hanya diproses SEKALI, bukan diulang setiap epoch. Pakai /kaggle/temp\n"
-            "# (lega, ephemeral). Shuffle dipindah ke tf.data agar caching tetap benar.\n"
+            "# Cache preprocessing ke disk (SSR + segmentasi dihitung sekali, bukan per epoch).\n"
             "CACHE_DIR = Path('/kaggle/temp/tfcache')\n"
             "CACHE_DIR.mkdir(parents=True, exist_ok=True)\n"
             "\n"
-            "def make_dataset(df, batch_size=32, shuffle=False, do_segment=True,\n"
+            "def make_dataset(df, batch_size=32, shuffle=False,\n"
+            "                 restoration='ssr', do_segment=True,\n"
             "                 enhancement_method=None, cache_name=None):\n"
             "    if enhancement_method is None:\n"
             "        enhancement_method = enhancement\n"
             "    def generator():\n"
             '        label_map = {"fresh": 0, "rotten": 1}\n'
             "        for _, row in df.iterrows():\n"
-            '            out = process_image(path=row["filepath"], enhancement=enhancement_method, do_segment=do_segment)\n'
+            "            out = process_image(\n"
+            '                path=row["filepath"],\n'
+            "                restoration=restoration,\n"
+            "                enhancement=enhancement_method,\n"
+            "                do_segment=do_segment,\n"
+            "            )\n"
             '            if out["img"] is None:\n'
             "                continue\n"
             '            x = image_to_cnn_input(out["img"])[0]\n'
@@ -386,15 +412,15 @@ nb03 = make_nb(
             "        dataset = dataset.shuffle(buffer_size=2048, seed=42, reshuffle_each_iteration=True)\n"
             "    return dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)\n"
             "\n"
-            "# Skenario 11: Dengan segmentasi + E*\n"
-            "train_ds_s11 = make_dataset(train_df, shuffle=True, do_segment=True, cache_name='train_s11')\n"
-            "val_ds_s11 = make_dataset(val_df, do_segment=True, cache_name='val_s11')\n"
-            "test_ds_s11 = make_dataset(test_df, do_segment=True, cache_name='test_s11')\n"
+            "# S9: SSR + E* + segmentasi (identik dengan S5 klasik, tapi CNN)\n"
+            "train_ds_s9 = make_dataset(train_df, shuffle=True, restoration='ssr', do_segment=True, cache_name='train_s9')\n"
+            "val_ds_s9   = make_dataset(val_df,   restoration='ssr', do_segment=True, cache_name='val_s9')\n"
+            "test_ds_s9  = make_dataset(test_df,  restoration='ssr', do_segment=True, cache_name='test_s9')\n"
             "\n"
-            "# Skenario 12: Tanpa segmentasi (Citra Asli) + Tanpa Penajaman (none)\n"
-            "train_ds_s12 = make_dataset(train_df, shuffle=True, do_segment=False, enhancement_method='none', cache_name='train_s12')\n"
-            "val_ds_s12 = make_dataset(val_df, do_segment=False, enhancement_method='none', cache_name='val_s12')\n"
-            "test_ds_s12 = make_dataset(test_df, do_segment=False, enhancement_method='none', cache_name='test_s12')\n"
+            "# S10: tanpa restorasi, tanpa enhancement, tanpa segmentasi (baseline murni CNN)\n"
+            "train_ds_s10 = make_dataset(train_df, shuffle=True, restoration='none', do_segment=False, enhancement_method='none', cache_name='train_s10')\n"
+            "val_ds_s10   = make_dataset(val_df,   restoration='none', do_segment=False, enhancement_method='none', cache_name='val_s10')\n"
+            "test_ds_s10  = make_dataset(test_df,  restoration='none', do_segment=False, enhancement_method='none', cache_name='test_s10')\n"
         ),
         code_cell(
             'y_train_labels = train_df["label"].map({"fresh": 0, "rotten": 1}).values\n'
@@ -403,137 +429,145 @@ nb03 = make_nb(
             "class_weight = {int(c): float(w) for c, w in zip(classes, weights)}\n"
             "class_weight\n"
         ),
-        md_cell("## Skenario 11: Pelatihan Model CNN Segmented + E*"),
+        md_cell("## Skenario 9: CNN — SSR + E* + Segmentasi (mirror S5)"),
         md_cell("### Stage 1 — Base frozen (20 epoch)"),
         code_cell(
-            "model_s11 = build_mobilenetv2(num_classes=2)\n"
-            "model_s11 = compile_mobilenet(model_s11, learning_rate=1e-4)\n"
-            'cb_s11 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s11_stage1.h5"))\n'
+            "model_s9 = build_mobilenetv2(num_classes=2)\n"
+            "model_s9 = compile_mobilenet(model_s9, learning_rate=1e-4)\n"
+            'cb_s9 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s09_stage1.h5"))\n'
             "\n"
-            "history1_s11 = model_s11.fit(\n"
-            "    train_ds_s11, validation_data=val_ds_s11, epochs=20,\n"
-            "    class_weight=class_weight, callbacks=cb_s11,\n"
+            "history1_s9 = model_s9.fit(\n"
+            "    train_ds_s9, validation_data=val_ds_s9, epochs=20,\n"
+            "    class_weight=class_weight, callbacks=cb_s9,\n"
             ")\n"
         ),
         md_cell("### Stage 2 — Fine-tune 20 lapisan terakhir (50 epoch)"),
         code_cell(
-            "model_s11 = unfreeze_last_layers(model_s11, n=20)\n"
-            "model_s11 = compile_mobilenet(model_s11, learning_rate=1e-5)\n"
-            'cb2_s11 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s11_stage2.h5"))\n'
+            "model_s9 = unfreeze_last_layers(model_s9, n=20)\n"
+            "model_s9 = compile_mobilenet(model_s9, learning_rate=1e-5)\n"
+            'cb2_s9 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s09_stage2.h5"))\n'
             "\n"
-            "history2_s11 = model_s11.fit(\n"
-            "    train_ds_s11, validation_data=val_ds_s11, epochs=50,\n"
-            "    class_weight=class_weight, callbacks=cb2_s11,\n"
+            "history2_s9 = model_s9.fit(\n"
+            "    train_ds_s9, validation_data=val_ds_s9, epochs=50,\n"
+            "    class_weight=class_weight, callbacks=cb2_s9,\n"
             ")\n"
         ),
-        md_cell("### Evaluasi Skenario 11"),
+        md_cell("### Evaluasi Skenario 9"),
         code_cell(
             "import time\n"
             "\n"
-            "y_true_list = []\n"
-            "y_pred_list = []\n"
+            "y_true_list, y_pred_list = [], []\n"
             "t0 = time.perf_counter()\n"
             "n = 0\n"
-            "for x_batch, y_batch in test_ds_s11:\n"
-            "    preds = model_s11.predict_on_batch(x_batch)\n"
+            "for x_batch, y_batch in test_ds_s9:\n"
+            "    preds = model_s9.predict_on_batch(x_batch)\n"
             "    y_pred_list.extend(np.argmax(preds, axis=1))\n"
             "    y_true_list.extend(np.argmax(y_batch.numpy(), axis=1))\n"
             "    n += len(y_batch)\n"
             "\n"
             "infer_ms = (time.perf_counter() - t0) * 1000 / max(n, 1)\n"
-            "y_true_s11 = np.array(y_true_list)\n"
-            "y_pred_s11 = np.array(y_pred_list)\n"
-            "metrics_s11 = compute_metrics(y_true_s11, y_pred_s11)\n"
+            "y_true_s9 = np.array(y_true_list)\n"
+            "y_pred_s9 = np.array(y_pred_list)\n"
+            "metrics_s9 = compute_metrics(y_true_s9, y_pred_s9)\n"
             "save_scenario_metrics(\n"
-            '    11, enhancement, True, "cnn", "MobileNetV2",\n'
-            '    metrics_s11, infer_ms, len(y_true_s11), paths["metrics"],\n'
+            '    9, enhancement, True, "cnn", "MobileNetV2",\n'
+            '    metrics_s9, infer_ms, len(y_true_s9), paths["metrics"], restoration="ssr",\n'
             ")\n"
-            'plot_confusion_matrix(y_true_s11, y_pred_s11, title="Scenario 11 CNN Segmented",\n'
-            '                      save_path=paths["figures_confusion"] / "scenario_11.png")\n'
-            "metrics_s11\n"
+            'plot_confusion_matrix(y_true_s9, y_pred_s9, title="Skenario 9 CNN (SSR+E*+Seg)",\n'
+            '                      save_path=paths["figures_confusion"] / "scenario_09.png")\n'
+            "metrics_s9\n"
         ),
-        md_cell("## Skenario 12: Pelatihan Model CNN Unsegmented (Citra Asli) + Raw"),
+        md_cell("## Skenario 10: CNN — Tanpa Restorasi, Tanpa Enhancement (mirror S1)"),
         md_cell("### Stage 1 — Base frozen (20 epoch)"),
         code_cell(
-            "model_s12 = build_mobilenetv2(num_classes=2)\n"
-            "model_s12 = compile_mobilenet(model_s12, learning_rate=1e-4)\n"
-            'cb_s12 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s12_stage1.h5"))\n'
+            "model_s10 = build_mobilenetv2(num_classes=2)\n"
+            "model_s10 = compile_mobilenet(model_s10, learning_rate=1e-4)\n"
+            'cb_s10 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s10_stage1.h5"))\n'
             "\n"
-            "history1_s12 = model_s12.fit(\n"
-            "    train_ds_s12, validation_data=val_ds_s12, epochs=20,\n"
-            "    class_weight=class_weight, callbacks=cb_s12,\n"
+            "history1_s10 = model_s10.fit(\n"
+            "    train_ds_s10, validation_data=val_ds_s10, epochs=20,\n"
+            "    class_weight=class_weight, callbacks=cb_s10,\n"
             ")\n"
         ),
         md_cell("### Stage 2 — Fine-tune 20 lapisan terakhir (50 epoch)"),
         code_cell(
-            "model_s12 = unfreeze_last_layers(model_s12, n=20)\n"
-            "model_s12 = compile_mobilenet(model_s12, learning_rate=1e-5)\n"
-            'cb2_s12 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s12_stage2.h5"))\n'
+            "model_s10 = unfreeze_last_layers(model_s10, n=20)\n"
+            "model_s10 = compile_mobilenet(model_s10, learning_rate=1e-5)\n"
+            'cb2_s10 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s10_stage2.h5"))\n'
             "\n"
-            "history2_s12 = model_s12.fit(\n"
-            "    train_ds_s12, validation_data=val_ds_s12, epochs=50,\n"
-            "    class_weight=class_weight, callbacks=cb2_s12,\n"
+            "history2_s10 = model_s10.fit(\n"
+            "    train_ds_s10, validation_data=val_ds_s10, epochs=50,\n"
+            "    class_weight=class_weight, callbacks=cb2_s10,\n"
             ")\n"
         ),
-        md_cell("### Evaluasi Skenario 12"),
+        md_cell("### Evaluasi Skenario 10"),
         code_cell(
-            "import time\n"
-            "\n"
-            "y_true_list = []\n"
-            "y_pred_list = []\n"
+            "y_true_list, y_pred_list = [], []\n"
             "t0 = time.perf_counter()\n"
             "n = 0\n"
-            "for x_batch, y_batch in test_ds_s12:\n"
-            "    preds = model_s12.predict_on_batch(x_batch)\n"
+            "for x_batch, y_batch in test_ds_s10:\n"
+            "    preds = model_s10.predict_on_batch(x_batch)\n"
             "    y_pred_list.extend(np.argmax(preds, axis=1))\n"
             "    y_true_list.extend(np.argmax(y_batch.numpy(), axis=1))\n"
             "    n += len(y_batch)\n"
             "\n"
             "infer_ms = (time.perf_counter() - t0) * 1000 / max(n, 1)\n"
-            "y_true_s12 = np.array(y_true_list)\n"
-            "y_pred_s12 = np.array(y_pred_list)\n"
-            "metrics_s12 = compute_metrics(y_true_s12, y_pred_s12)\n"
+            "y_true_s10 = np.array(y_true_list)\n"
+            "y_pred_s10 = np.array(y_pred_list)\n"
+            "metrics_s10 = compute_metrics(y_true_s10, y_pred_s10)\n"
             "save_scenario_metrics(\n"
-            '    12, "none", False, "cnn", "MobileNetV2",\n'
-            '    metrics_s12, infer_ms, len(y_true_s12), paths["metrics"],\n'
+            '    10, "none", False, "cnn", "MobileNetV2",\n'
+            '    metrics_s10, infer_ms, len(y_true_s10), paths["metrics"], restoration="none",\n'
             ")\n"
-            'plot_confusion_matrix(y_true_s12, y_pred_s12, title="Scenario 12 CNN Unsegmented",\n'
-            '                      save_path=paths["figures_confusion"] / "scenario_12.png")\n'
-            "metrics_s12\n"
+            'plot_confusion_matrix(y_true_s10, y_pred_s10, title="Skenario 10 CNN (Raw)",\n'
+            '                      save_path=paths["figures_confusion"] / "scenario_10.png")\n'
+            "metrics_s10\n"
         ),
-        md_cell("## McNemar Significance Tests"),
+        md_cell("## McNemar Significance Tests (dijalankan sebelum Grad-CAM)"),
         code_cell(
-            "# Dijalankan SEBELUM Grad-CAM supaya hasil uji signifikansi (penting\n"
-            "# untuk laporan) tersimpan walau sel visualisasi di bawah bermasalah.\n"
+            "# S5 (SVM, full pipeline) adalah anchor klasik untuk perbandingan vs CNN.\n"
             "import joblib\n"
             "\n"
-            's6_path = paths["models"] / "svm_scenario_06.pkl"\n'
-            "if s6_path.exists():\n"
+            's5_path = paths["models"] / "svm_scenario_05.pkl"\n'
+            "if s5_path.exists():\n"
             "    from src.experiments import extract_split_matrix\n"
-            "    s6_model = joblib.load(s6_path)\n"
-            "    X_test, y_test_s6, _ = extract_split_matrix(\n"
-            '        test_df, read_best_enhancement(paths["metrics"]), True, "all", paths["data_processed"]\n'
+            "    s5_model = joblib.load(s5_path)\n"
+            "    X_test_s5, _, _ = extract_split_matrix(\n"
+            '        test_df, read_best_enhancement(paths["metrics"]), True, "all",\n'
+            '        paths["data_processed"], restoration="ssr",\n'
             "    )\n"
-            "    y_pred_s6 = s6_model.predict(X_test)\n"
+            "    y_pred_s5 = s5_model.predict(X_test_s5)\n"
             "\n"
-            "    # 1. S11 vs S6\n"
-            "    stat11_s6, pval11_s6, conclusion11_s6 = mcnemar_test(y_true_s11, y_pred_s11, y_pred_s6)\n"
-            '    append_significance_test("S11 vs S6", "S11", "S6", stat11_s6, pval11_s6, conclusion11_s6, paths["metrics"])\n'
-            "    print('S11 vs S6:', stat11_s6, pval11_s6, conclusion11_s6)\n"
+            "    # 1. S9 (CNN full) vs S5 (SVM full) — apakah CNN signifikan lebih baik?\n"
+            "    stat, pval, concl = mcnemar_test(y_true_s9, y_pred_s9, y_pred_s5)\n"
+            '    append_significance_test("S9 vs S5 (CNN vs SVM)", "S9", "S5", stat, pval, concl, paths["metrics"])\n'
+            "    print('S9 vs S5:', stat, pval, concl)\n"
             "\n"
-            "    # 2. S12 vs S6\n"
-            "    stat12_s6, pval12_s6, conclusion12_s6 = mcnemar_test(y_true_s12, y_pred_s12, y_pred_s6)\n"
-            '    append_significance_test("S12 vs S6", "S12", "S6", stat12_s6, pval12_s6, conclusion12_s6, paths["metrics"])\n'
-            "    print('S12 vs S6:', stat12_s6, pval12_s6, conclusion12_s6)\n"
+            "    # 2. S10 (CNN raw) vs S1 (SVM raw) — perbandingan baseline raw\n"
+            "    from src.experiments import extract_split_matrix as esm\n"
+            '    X_test_s1, _, _ = esm(test_df, "none", False, "all", paths["data_processed"], restoration="none")\n'
+            "    # S1 tidak di-save modelnya karena bukan model utama; re-train cepat (hanya 6 fit).\n"
+            "    from src.config import SCENARIO_CONFIG\n"
+            "    from src.models import build_svm_pipeline\n"
+            '    X_train_s1, _, _ = esm(train_df, "none", False, "all", paths["data_processed"], restoration="none")\n'
+            "    from src.utils import label_encode\n"
+            "    y_train_s1, _ = label_encode(train_df['label'])\n"
+            "    y_test_s1, _ = label_encode(test_df.iloc[:len(X_test_s1)]['label'])\n"
+            "    s1_model = build_svm_pipeline()\n"
+            "    s1_model.fit(X_train_s1, y_train_s1)\n"
+            "    y_pred_s1 = s1_model.predict(X_test_s1)\n"
+            "    stat2, pval2, concl2 = mcnemar_test(y_true_s10, y_pred_s10, y_pred_s1)\n"
+            '    append_significance_test("S10 vs S1 (CNN-raw vs SVM-raw)", "S10", "S1", stat2, pval2, concl2, paths["metrics"])\n'
+            "    print('S10 vs S1:', stat2, pval2, concl2)\n"
             "\n"
-            "    # 3. S11 vs S12\n"
-            "    stat11_12, pval11_12, conclusion11_12 = mcnemar_test(y_true_s11, y_pred_s11, y_pred_s12)\n"
-            '    append_significance_test("S11 vs S12", "S11", "S12", stat11_12, pval11_12, conclusion11_12, paths["metrics"])\n'
-            "    print('S11 vs S12:', stat11_12, pval11_12, conclusion11_12)\n"
+            "    # 3. S9 vs S10 — apakah full pipeline CNN > raw CNN?\n"
+            "    stat3, pval3, concl3 = mcnemar_test(y_true_s9, y_pred_s9, y_pred_s10)\n"
+            '    append_significance_test("S9 vs S10 (full vs raw CNN)", "S9", "S10", stat3, pval3, concl3, paths["metrics"])\n'
+            "    print('S9 vs S10:', stat3, pval3, concl3)\n"
             "else:\n"
-            '    print("Jalankan notebook 02 terlebih dahulu untuk model S6.")\n'
+            '    print("Model S5 tidak ditemukan. Pastikan notebook 02 sudah dijalankan.")\n'
         ),
-        md_cell("## Grad-CAM (Skenario 11 — Segmented)"),
+        md_cell("## Grad-CAM (Skenario 9 — CNN full pipeline)"),
         code_cell(
             "import matplotlib.pyplot as plt\n"
             "\n"
@@ -550,13 +584,14 @@ nb03 = make_nb(
             "        if subset.empty:\n"
             '            subset = test_df[test_df["label"] == label].head(3)\n'
             "        for _, row in subset.head(3).iterrows():\n"
-            '            out = process_image(path=row["filepath"], enhancement=enhancement, do_segment=True)\n'
+            "            out = process_image(\n"
+            '                path=row["filepath"], restoration="ssr",\n'
+            "                enhancement=enhancement, do_segment=True,\n"
+            "            )\n"
             '            if out["img"] is None:\n'
             "                continue\n"
             '            x = image_to_cnn_input(out["img"])\n'
-            "            # Pass the full model; make_gradcam_heatmap replays it under a\n"
-            "            # GradientTape (Keras 3-safe, handles the nested MobileNetV2 base).\n"
-            "            heatmap = make_gradcam_heatmap(model_s11, x)\n"
+            "            heatmap = make_gradcam_heatmap(model_s9, x)\n"
             '            fname = Path(row["filepath"]).stem\n'
             "            save = gradcam_dir / f\"{commodity}_{label}_{fname}.png\"\n"
             "            plot_gradcam(out[\"img\"], heatmap, save_path=save)\n"
@@ -621,11 +656,11 @@ nb04 = make_nb(
             "else:\n"
             '    print("Jalankan notebook 02 dan 03 untuk uji McNemar.")\n'
         ),
-        md_cell("## Feature Importance (Skenario 10 — RF)"),
+        md_cell("## Feature Importance (Skenario 8 — RF)"),
         code_cell(
             "import joblib\n"
             "\n"
-            'rf_path = paths["models"] / "rf_scenario_10.pkl"\n'
+            'rf_path = paths["models"] / "rf_scenario_08.pkl"\n'
             "if rf_path.exists():\n"
             "    rf = joblib.load(rf_path)\n"
             "    from src.features import get_feature_group_names\n"
@@ -633,10 +668,10 @@ nb04 = make_nb(
             "    if len(names) != len(rf.feature_importances_):\n"
             '        names = [f"f{i}" for i in range(len(rf.feature_importances_))]\n'
             "    labels, vals = aggregate_feature_importance(rf.feature_importances_, names)\n"
-            '    plot_feature_importance(vals, labels, save_path=paths["figures"] / "feature_importance_s10.png")\n'
+            '    plot_feature_importance(vals, labels, save_path=paths["figures"] / "feature_importance_s08.png")\n'
             "    plt.show()\n"
             "else:\n"
-            '    print("Model RF S10 belum tersedia.")\n'
+            '    print("Model RF S8 belum tersedia. Jalankan notebook 02 terlebih dahulu.")\n'
         ),
         md_cell("## Inference Time Comparison"),
         code_cell(

@@ -57,15 +57,30 @@ def apply_ssr(img_bgr: np.ndarray, sigma: float = 30.0) -> np.ndarray:
     return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
 
 
-def preprocess_from_array(img_bgr: np.ndarray, size: tuple[int, int] = (224, 224)) -> np.ndarray:
-    """Resize + SSR on in-memory BGR image. Returns uint8 BGR."""
-    resized = resize_image(img_bgr, size)
-    return apply_ssr(resized)
+def preprocess_from_array(
+    img_bgr: np.ndarray,
+    size: tuple[int, int] = (224, 224),
+    apply_restoration: bool = True,
+) -> np.ndarray:
+    """Resize (+ optional SSR restoration) on in-memory BGR image. Returns uint8 BGR.
 
-
-def preprocess_pipeline(path: str | Path, size: tuple[int, int] = (224, 224)) -> np.ndarray | None:
+    apply_restoration toggles Single-Scale Retinex illumination correction.
+    Set False to obtain a TRUE raw baseline (resize only), so the contribution
+    of the restoration step can be measured instead of being always-on.
     """
-    Full preprocess: load → resize → SSR.
+    resized = resize_image(img_bgr, size)
+    if apply_restoration:
+        return apply_ssr(resized)
+    return to_uint8(resized)
+
+
+def preprocess_pipeline(
+    path: str | Path,
+    size: tuple[int, int] = (224, 224),
+    apply_restoration: bool = True,
+) -> np.ndarray | None:
+    """
+    Full preprocess: load → resize → (optional) SSR restoration.
     Returns uint8 BGR or None if file is corrupt / unreadable.
 
     Reads the file exactly once (previously check_integrity read it once, then
@@ -74,4 +89,4 @@ def preprocess_pipeline(path: str | Path, size: tuple[int, int] = (224, 224)) ->
     img = cv2.imread(str(path))
     if img is None or img.size == 0:
         return None
-    return preprocess_from_array(img, size)
+    return preprocess_from_array(img, size, apply_restoration)

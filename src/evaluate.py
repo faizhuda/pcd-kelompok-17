@@ -87,12 +87,14 @@ def save_scenario_metrics(
     inference_time_ms: float,
     n_test_samples: int,
     metrics_dir: str | Path,
+    restoration: str = "ssr",
 ) -> Path:
     """Save per-scenario metrics CSV."""
     out_dir = Path(metrics_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     row = {
         "scenario_id": scenario_id,
+        "restoration": restoration,
         "enhancement": enhancement,
         "segmentation": segmentation,
         "features": features,
@@ -153,6 +155,7 @@ def print_summary_table(metrics_dir: str | Path = "results/metrics/") -> pd.Data
     summary = summary.sort_values("scenario_id")
     cols = [
         "scenario_id",
+        "restoration",
         "enhancement",
         "segmentation",
         "features",
