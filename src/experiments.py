@@ -239,5 +239,14 @@ def run_mcnemar_pair(
     pred_b: np.ndarray,
     metrics_dir: Path,
 ) -> None:
+    # McNemar requires paired predictions on the SAME samples. Guard against a
+    # length mismatch (would otherwise raise a cryptic numpy error and abort the
+    # whole notebook at the very end of a multi-hour run).
+    if len(pred_a) != len(y_true) or len(pred_b) != len(y_true):
+        print(
+            f"[SKIP McNemar {name}] panjang tidak sama: "
+            f"y_true={len(y_true)}, {model_a}={len(pred_a)}, {model_b}={len(pred_b)}"
+        )
+        return
     stat, pval, conclusion = mcnemar_test(y_true, pred_a, pred_b)
     append_significance_test(name, model_a, model_b, stat, pval, conclusion, metrics_dir)
