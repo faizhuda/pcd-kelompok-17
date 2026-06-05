@@ -473,6 +473,15 @@ nb03 = make_nb(
             '    10, enhancement, True, "cnn", "MobileNetV2",\n'
             '    metrics_s10, infer_ms, len(y_true_s10), paths["metrics"], restoration="ssr",\n'
             ")\n"
+            "# Save predictions for per-commodity analysis\n"
+            "valid_rows_s10 = []\n"
+            "for _, row in test_df.iterrows():\n"
+            "    out = process_image(row['filepath'], restoration='ssr', enhancement=enhancement, do_segment=True)\n"
+            "    if out['img'] is not None:\n"
+            "        valid_rows_s10.append(row)\n"
+            "pred_df_s10 = pd.DataFrame(valid_rows_s10)\n"
+            "pred_df_s10['pred'] = y_pred_s10\n"
+            "pred_df_s10.to_csv(paths['metrics'] / 'predictions_s10.csv', index=False)\n"
             'plot_confusion_matrix(y_true_s10, y_pred_s10, title="Skenario 10 CNN (SSR+E*+Seg)",\n'
             '                      save_path=paths["figures_confusion"] / "scenario_10.png")\n'
             "metrics_s10\n"
@@ -681,6 +690,47 @@ nb04 = make_nb(
             '    ax.set_title("Inference Time (ms/image)")\n'
             "    plt.tight_layout()\n"
             "    plt.show()\n"
+        ),
+        md_cell("## Per-Commodity Performance Comparison"),
+        code_cell(
+            's5_pred_path = metrics_dir / "predictions_s5.csv"\n'
+            's10_pred_path = metrics_dir / "predictions_s10.csv"\n'
+            "\n"
+            "if s5_pred_path.exists() and s10_pred_path.exists():\n"
+            "    from sklearn.metrics import f1_score\n"
+            "    s5_preds = pd.read_csv(s5_pred_path)\n"
+            "    s10_preds = pd.read_csv(s10_pred_path)\n"
+            '    label_map = {"fresh": 0, "rotten": 1}\n'
+            '    s5_preds["true_encoded"] = s5_preds["label"].map(label_map)\n'
+            '    s10_preds["true_encoded"] = s10_preds["label"].map(label_map)\n'
+            "    s5_comm = []\n"
+            '    for comm, group in s5_preds.groupby("commodity"):\n'
+            '        f1 = f1_score(group["true_encoded"], group["pred"], average="weighted", zero_division=0)\n'
+            '        s5_comm.append({"commodity": comm, "samples": len(group), "f1_s5": f1})\n'
+            "    df_s5_comm = pd.DataFrame(s5_comm)\n"
+            "    s10_comm = []\n"
+            '    for comm, group in s10_preds.groupby("commodity"):\n'
+            '        f1 = f1_score(group["true_encoded"], group["pred"], average="weighted", zero_division=0)\n'
+            '        s10_comm.append({"commodity": comm, "f1_s10": f1})\n'
+            "    df_s10_comm = pd.DataFrame(s10_comm)\n"
+            '    df_compare = pd.merge(df_s5_comm, df_s10_comm, on="commodity").sort_values("f1_s10", ascending=False)\n'
+            "    display(df_compare)\n"
+            "    df_melted = df_compare.melt(id_vars=[\"commodity\", \"samples\"], value_vars=[\"f1_s5\", \"f1_s10\"],\n"
+            '                                var_name="model", value_name="f1_score")\n'
+            '    df_melted["model"] = df_melted["model"].map({"f1_s5": "S5 SVM", "f1_s10": "S10 CNN"})\n'
+            "    fig, ax = plt.subplots(figsize=(12, 5))\n"
+            '    sns.barplot(data=df_melted, x="commodity", y="f1_score", hue="model", ax=ax)\n'
+            '    ax.set_title("F1-Score per Komoditas (S5 SVM vs S10 CNN)")\n'
+            '    ax.set_ylabel("Weighted F1-Score")\n'
+            '    ax.set_xlabel("Komoditas")\n'
+            "    ax.set_ylim(0, 1.05)\n"
+            "    plt.xticks(rotation=45, ha='right')\n"
+            "    plt.grid(axis='y', linestyle='--', alpha=0.7)\n"
+            "    plt.tight_layout()\n"
+            '    plt.savefig(paths["figures"] / "commodity_comparison.png", dpi=150)\n'
+            "    plt.show()\n"
+            "else:\n"
+            '    print("Prediksi S5 atau S10 belum lengkap. Lewati perbandingan komoditas.")\n'
         ),
     ]
 )

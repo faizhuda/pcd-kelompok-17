@@ -172,6 +172,10 @@ def run_classical_scenario(
     # feature-importance analysis) so downstream notebooks can reload them.
     if scenario_id in (5, 9):
         joblib.dump(model, models_dir / f"{'svm' if model_type == 'svm' else 'rf'}_scenario_{scenario_id:02d}.pkl")
+    if scenario_id == 5:
+        pred_df = test_df.iloc[test_v].copy()
+        pred_df["pred"] = y_pred
+        pred_df.to_csv(metrics_dir / "predictions_s5.csv", index=False)
 
     val_f1 = compute_metrics(y_val, val_pred)["f1_weighted"]
 
