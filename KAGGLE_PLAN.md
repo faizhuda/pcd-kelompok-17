@@ -425,3 +425,21 @@ Ada **dua jalur** sesuai peran (lihat Bagian D). Mayoritas anggota cukup Jalur A
 - **Dataset di-attach** & **split deterministik di-regenerate** -> tidak ada file
   rapuh yang dioper antar-orang.
 - **Hand-off satu klik**: *+ Add Data -> Your Work* / Dataset bersama, auto-restore.
+
+---
+
+## G. Versi Paket Kaggle (Reproducibility)
+
+Diverifikasi pada **Kaggle Notebooks, Juni 2026** (image `Latest Container Image`):
+
+| Paket | Versi di Kaggle | Catatan |
+|-------|----------------|---------|
+| Python | 3.12 | |
+| TensorFlow / Keras | 2.16+ (Keras 3) | `Layer.output_shape` dihapus → kode Grad-CAM pakai `.output.shape` |
+| scikit-learn | 1.4+ | |
+| opencv-python | 4.9+ | |
+| pandas | 2.2+ | |
+| numpy | 1.26+ | |
+
+> Jika Kaggle mengupgrade image dan terjadi error tak terduga, cek versi paket
+> di notebook dengan: `import sklearn; print(sklearn.__version__)` dll.

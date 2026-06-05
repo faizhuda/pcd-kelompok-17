@@ -95,7 +95,9 @@ Single-variable isolation. Restorasi (SSR) kini **toggle**, jadi ada baseline ra
 - `src/evaluate.py` - metrics, `mcnemar_test`, `make_gradcam_heatmap` (Keras3-safe), `save_scenario_metrics` (kolom restoration), `print_summary_table`.
 - `src/features.py` - color/texture/shape; helper `_foreground_mask`.
 - `scripts/rebuild_notebooks.py` - **generator semua notebook** (KAGGLE_SETUP, nb01-nb04).
-- `tests/test_evaluate.py` - TF tests (importorskip), termasuk regresi Grad-CAM nested-model.
+- `tests/test_evaluate.py` - TF tests (importorskip), regresi Grad-CAM nested-model.
+- `tests/test_pipeline.py` - Smoke tests: restoration toggle, run_classical_scenario E2E (regresi predictions_s5 bug).
+- `tests/test_preprocessing.py` - Termasuk uji restoration=ssr vs none.
 - `KAGGLE_PLAN.md` - panduan workflow Kaggle lengkap.
 
 ---
@@ -104,6 +106,8 @@ Single-variable isolation. Restorasi (SSR) kini **toggle**, jadi ada baseline ra
 
 [DONE] Migrasi Kaggle, setup cell, auto-restore, split deterministik, cache self-validating, Grad-CAM Keras-3 fix, McNemar sebelum Grad-CAM, SSR toggle + baseline raw, CI, cleanup, KAGGLE_PLAN.md, **gamma SVM dikembalikan**, **skenario shape-only ditambahkan**, desain skenario S1-S11.
 
-[BELUM] Belum: (1) re-run pipeline penuh di Kaggle dengan kode terbaru; (2) analisis per-komoditas di nb04; (3) tulis bagian kelemahan (leakage, single-split) di laporan.
+[DONE] Semua pending selesai: analisis per-komoditas di nb04, kelemahan sistem di nb04, docstring fix, y_test_s1 dead code dihapus, S10 reprocessing loop diperbaiki, tests restoration + pipeline smoke.
 
-Verifikasi terakhir hijau: ruff clean, 51 tests pass (non-TF), smoke OK, 4 notebook ter-generate & syntax-valid.
+[BELUM] Re-run pipeline penuh di Kaggle dengan kode final.
+
+Verifikasi terakhir: ruff clean, ~56 tests pass (non-TF), smoke OK, 4 notebook ter-generate & syntax-valid.

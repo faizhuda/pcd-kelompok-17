@@ -65,3 +65,23 @@ def test_preprocess_from_array_shape():
     out = preprocess_from_array(img)
     assert out.shape == (224, 224, 3)
     assert out.dtype == np.uint8
+
+
+def test_preprocess_from_array_restoration_ssr_differs_from_none():
+    """apply_restoration=True (SSR) must produce different pixels than raw resize."""
+    img = _make_img(100, 100)
+    with_ssr = preprocess_from_array(img, apply_restoration=True)
+    without_ssr = preprocess_from_array(img, apply_restoration=False)
+    assert with_ssr.shape == without_ssr.shape == (224, 224, 3)
+    assert not np.array_equal(with_ssr, without_ssr), (
+        "SSR and raw outputs must differ — restoration had no effect"
+    )
+
+
+def test_preprocess_from_array_no_restoration_is_pure_resize():
+    """apply_restoration=False must equal a bare resize (no colour transform)."""
+    from src.preprocessing import resize_image, to_uint8
+    img = _make_img(80, 60)
+    raw = preprocess_from_array(img, apply_restoration=False)
+    expected = to_uint8(resize_image(img, (224, 224)))
+    np.testing.assert_array_equal(raw, expected)
