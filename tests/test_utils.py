@@ -5,11 +5,32 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import cv2
 import numpy as np
 import pandas as pd
 import pytest
 
-from src.utils import label_encode, load_splits, save_splits
+from src.utils import build_dataset_index, label_encode, load_splits, save_splits
+
+
+def test_build_dataset_index_is_sorted_deterministically(tmp_path):
+    # Order in which files are created should NOT affect the indexed row order:
+    # build_dataset_index must sort so make_splits is deterministic across mounts.
+    layout = [
+        ("Apple__Healthy", "10.jpg"),
+        ("Apple__Rotten", "2.jpg"),
+        ("Apple__Healthy", "1.jpg"),
+        ("Banana__Rotten", "5.jpg"),
+    ]
+    img = np.zeros((4, 4, 3), dtype=np.uint8)
+    for folder, name in layout:
+        d = tmp_path / folder
+        d.mkdir(parents=True, exist_ok=True)
+        cv2.imwrite(str(d / name), img)
+
+    df = build_dataset_index(tmp_path)
+    files = df["filepath"].tolist()
+    assert files == sorted(files)  # deterministic, path-sorted order
 
 # ---------------------------------------------------------------------------
 # label_encode
@@ -120,15 +141,15 @@ def test_load_splits_resolves_to_absolute(tmp_path):
 
 def test_parse_filepath_parts():
     from src.utils import _parse_filepath_parts
-    
+
     # Test double underscore splitting
     assert _parse_filepath_parts(("Fruit And Vegetable Diseases Dataset", "Apple__Healthy")) == ("Apple", "fresh")
     assert _parse_filepath_parts(("Fruit And Vegetable Diseases Dataset", "Apple__Rotten")) == ("Apple", "rotten")
     assert _parse_filepath_parts(("Fruit And Vegetable Diseases Dataset", "Banana__Healthy")) == ("Banana", "fresh")
-    
+
     # Test ignore list filtering
     assert _parse_filepath_parts(("1.archive", "Fruit And Vegetable Diseases Dataset", "Banana__Rotten")) == ("Banana", "rotten")
-    
+
     # Test standard fallbacks
     assert _parse_filepath_parts(("Apple", "Healthy")) == ("Apple", "fresh")
     assert _parse_filepath_parts(("Banana", "Rotten")) == ("Banana", "rotten")

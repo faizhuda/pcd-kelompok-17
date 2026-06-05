@@ -164,6 +164,11 @@ def build_dataset_index(raw_dir: str | Path) -> pd.DataFrame:
         )
 
     df = pd.DataFrame(records)
+    # Sort by path so row order is independent of the filesystem / mount point.
+    # rglob order varies between environments (e.g. Kaggle mounts the dataset at
+    # different paths), which would otherwise yield different train/test splits
+    # for the same SEED. Sorting makes make_splits fully deterministic everywhere.
+    df = df.sort_values("filepath", kind="stable", ignore_index=True)
     df["strat_key"] = df["commodity"] + "_" + df["label"]
     return df
 

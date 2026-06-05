@@ -33,13 +33,26 @@ def extract_split_matrix(
 ) -> tuple[np.ndarray, np.ndarray, pd.DataFrame]:
     """Extract features for all rows in df; optional npz cache."""
     cache_key = f"{split_name}_{enhancement}_{do_segment}_{feature_groups}"
+    # Filenames identify the rows this matrix belongs to, independent of the
+    # absolute mount path. Used to detect a stale cache built for a different
+    # split (which would otherwise raise IndexError or, worse, silently
+    # misalign features with labels).
+    current_files = [Path(p).name for p in df["filepath"].tolist()]
 
     if cache_path is not None:
         npz_file = cache_path / f"features_{cache_key}.npz"
         if npz_file.exists():
             data = np.load(npz_file, allow_pickle=True)
-            valid_df = df.iloc[data["valid_idx"].tolist()].reset_index(drop=True)
-            return data["X"], data["y"], valid_df
+            cached_files = data["df_files"].tolist() if "df_files" in data else None
+            valid_idx = data["valid_idx"].tolist()
+            cache_ok = (
+                cached_files == current_files
+                and (not valid_idx or max(valid_idx) < len(df))
+            )
+            if cache_ok:
+                valid_df = df.iloc[valid_idx].reset_index(drop=True)
+                return data["X"], data["y"], valid_df
+            # Stale/mismatched cache (different split or old format) → recompute.
 
     from src.utils import get_project_paths
 
@@ -62,6 +75,7 @@ def extract_split_matrix(
             X=X,
             y=y,
             valid_idx=np.array(valid_idx),
+            df_files=np.array(current_files),
         )
 
     return X, y, valid_df
