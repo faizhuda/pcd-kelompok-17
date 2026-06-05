@@ -53,14 +53,15 @@ Single-variable isolation. Restorasi (SSR) kini **toggle**, jadi ada baseline ra
 | 5 | ssr | best(E*) | T | all | svm | **full klasik** (anchor McNemar) → `svm_scenario_05.pkl` |
 | 6 | ssr | best | T | color | svm | ablasi fitur |
 | 7 | ssr | best | T | texture | svm | ablasi fitur |
-| 8 | ssr | best | T | all | rf | classifier + feat.importance → `rf_scenario_08.pkl` |
-| 9 | ssr | best | T (CNN) | — | MobileNetV2 | mirror S5 |
-| 10 | none | none | F (CNN) | — | MobileNetV2 | mirror S1 |
+| 8 | ssr | best | T | shape | svm | ablasi fitur (bentuk) |
+| 9 | ssr | best | T | all | rf | classifier + feat.importance → `rf_scenario_09.pkl` |
+| 10 | ssr | best | T (CNN) | — | MobileNetV2 | mirror S5 |
+| 11 | none | none | F (CNN) | — | MobileNetV2 | mirror S1 |
 
 - E* dipilih dari val-F1 S2/S3/S4 (bukan S1, beda restorasi).
 - McNemar nb02: efek SSR (S2vsS1), efek E* (S{E*}vsS2), efek segmentasi (S5 vs E*-noseg).
-- McNemar nb03: S9vsS5 (CNN vs SVM full), S10vsS1 (raw), S9vsS10.
-- GridSearch sudah dikecilkan di `models.py` (lihat catatan pending di bawah).
+- McNemar nb03: S10vsS5 (CNN vs SVM full), S11vsS1 (raw), S10vsS11.
+- GridSearch SVM: `C=[1,10]`, `gamma=['scale', 0.01]`, `cv=3` → 4 candidates × 3 folds = 12 fits.
 
 ---
 
@@ -72,13 +73,11 @@ Single-variable isolation. Restorasi (SSR) kini **toggle**, jadi ada baseline ra
 
 ---
 
-## 4. PENDING — keputusan metodologi (BELUM dikerjakan)
+## 4. PENDING — keputusan metodologi (status update)
 
-Audit metodologi terakhir menyimpulkan optimasi kemarin **sedikit kebablasan** di 2 titik, plus ada kedalaman analisis yang belum disentuh. User sedang memutuskan. Yang diusulkan & menunggu persetujuan:
-
-### 🔴 Disarankan diterapkan sebelum re-run
-1. **Kembalikan eksplorasi gamma SVM.** Di `src/models.py` `build_svm_pipeline`, sekarang `gamma=['scale']` saja — terlalu agresif, berisiko bikin SVM under-tuned → bias perbandingan "CNN vs SVM". Ubah ke `gamma=['scale', 0.01]` (atau `['scale', 0.001, 0.01]`), `C=[1,10]`, `cv=3`. Masih ~4× lebih cepat dari grid asli, tapi tuning adil.
-2. **Kembalikan skenario shape-only.** Rubrik minta fitur **bentuk**, warna, tekstur. Sekarang shape-only dihapus. Tambah 1 skenario klasik `(ssr, best, seg, features="shape", svm)`. Murah (feature cache). CATATAN: menambah skenario klasik akan **menggeser penomoran** — pertimbangkan sisipkan sebagai S8 dan geser RF→S9, CNN→S10/S11, ATAU taruh shape sebagai skenario terakhir klasik agar ID lmain (S5 anchor, S8 RF) tidak berubah. Hati-hati update referensi McNemar + `nb04` (rf_scenario_0X.pkl) + model-save IDs di `experiments.py` (`if scenario_id in (5, 8)`).
+### ✅ Sudah diterapkan
+1. **Gamma SVM dikembalikan.** `gamma=['scale', 0.01]`, `C=[1,10]`, `cv=3`. 4 candidates × 3 folds = 12 fits — cukup cepat, tuning adil untuk perbandingan CNN vs SVM.
+2. **Skenario shape-only ditambahkan.** S8 (shape-only SVM), RF geser ke S9, CNN ke S10/S11. Semua referensi (McNemar, model-save, nb04) sudah di-update.
 
 ### 🟢 Paling bernilai untuk nilai (sebagian besar analisis, bukan training)
 3. **Analisis per-komoditas** di `nb04`: pecah F1 per komoditas, dan/atau histogram warna fresh-vs-rotten per komoditas. Ini jantung "warna sebagai indikator mutu" yang sekarang kabur karena 14 komoditas digabung. Nol biaya training tambahan.
@@ -88,11 +87,11 @@ Audit metodologi terakhir menyimpulkan optimasi kemarin **sedikit kebablasan** d
 
 ## 5. File peta cepat
 
-- `src/config.py` — SCENARIO_CONFIG (S1–S8, ada field `restoration`).
-- `src/models.py` — `build_svm_pipeline` (GridSearch — TARGET fix gamma), `build_rf_classifier`, `build_mobilenetv2`.
+- `src/config.py` — SCENARIO_CONFIG (S1–S9 klasik, ada field `restoration`).
+- `src/models.py` — `build_svm_pipeline` (GridSearch — gamma=['scale', 0.01]), `build_rf_classifier`, `build_mobilenetv2`.
 - `src/preprocessing.py` — `apply_restoration` toggle (SSR).
 - `src/pipeline.py` — `process_image(restoration=..., enhancement=..., do_segment=...)`, `batch_extract_features`.
-- `src/experiments.py` — `extract_split_matrix` (cache + restoration), `run_classical_scenario` (model-save IDs 5 & 8).
+- `src/experiments.py` — `extract_split_matrix` (cache + restoration), `run_classical_scenario` (model-save IDs 5 & 9).
 - `src/evaluate.py` — metrics, `mcnemar_test`, `make_gradcam_heatmap` (Keras3-safe), `save_scenario_metrics` (kolom restoration), `print_summary_table`.
 - `src/features.py` — color/texture/shape; helper `_foreground_mask`.
 - `scripts/rebuild_notebooks.py` — **generator semua notebook** (KAGGLE_SETUP, nb01–nb04).
@@ -103,8 +102,8 @@ Audit metodologi terakhir menyimpulkan optimasi kemarin **sedikit kebablasan** d
 
 ## 6. Ringkas: apa yang sudah & belum
 
-✅ Migrasi Kaggle, setup cell, auto-restore, split deterministik, cache self-validating, Grad-CAM Keras-3 fix, McNemar sebelum Grad-CAM, GridSearch dikecilkan, SSR toggle + baseline raw, desain skenario lean (S1–S10), CI, cleanup, KAGGLE_PLAN.md.
+✅ Migrasi Kaggle, setup cell, auto-restore, split deterministik, cache self-validating, Grad-CAM Keras-3 fix, McNemar sebelum Grad-CAM, SSR toggle + baseline raw, CI, cleanup, KAGGLE_PLAN.md, **gamma SVM dikembalikan**, **skenario shape-only ditambahkan**, desain skenario S1–S11.
 
-⏳ Belum: (1) re-run pipeline penuh di Kaggle dengan kode terbaru; (2) keputusan gamma + shape-only; (3) analisis per-komoditas di nb04; (4) tulis bagian kelemahan (leakage, single-split) di laporan.
+⏳ Belum: (1) re-run pipeline penuh di Kaggle dengan kode terbaru; (2) analisis per-komoditas di nb04; (3) tulis bagian kelemahan (leakage, single-split) di laporan.
 
 Verifikasi terakhir hijau: ruff clean, 51 tests pass (non-TF), smoke OK, 4 notebook ter-generate & syntax-valid.

@@ -16,10 +16,11 @@ from sklearn.utils.class_weight import compute_class_weight
 def build_svm_pipeline(random_state: int = 42, cv: int = 3, n_jobs: int = -1, verbose: int = 0) -> GridSearchCV:
     """StandardScaler + SVC RBF with a small GridSearchCV (f1_weighted).
 
-    The grid is intentionally compact (2 candidates x 3 folds = 6 fits). An
+    The grid is intentionally compact (4 candidates x 3 folds = 12 fits). An
     exhaustive grid over C and gamma adds hours of compute on a large dataset
     for negligible accuracy gain — not worth it for this project, where the
     focus is the pipeline and analysis, not squeezing out the last F1 point.
+    Adding gamma=0.01 alongside 'scale' ensures a fairer comparison vs CNN.
     """
     pipeline = Pipeline(
         [
@@ -37,7 +38,7 @@ def build_svm_pipeline(random_state: int = 42, cv: int = 3, n_jobs: int = -1, ve
     )
     param_grid = {
         "svm__C": [1, 10],
-        "svm__gamma": ["scale"],
+        "svm__gamma": ["scale", 0.01],
     }
     return GridSearchCV(
         pipeline,

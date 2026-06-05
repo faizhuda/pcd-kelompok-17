@@ -168,9 +168,9 @@ def run_classical_scenario(
     )
     plt_close()
 
-    # Persist the full-pipeline SVM (S5, McNemar anchor vs CNN) and the RF (S8,
+    # Persist the full-pipeline SVM (S5, McNemar anchor vs CNN) and the RF (S9,
     # feature-importance analysis) so downstream notebooks can reload them.
-    if scenario_id in (5, 8):
+    if scenario_id in (5, 9):
         joblib.dump(model, models_dir / f"{'svm' if model_type == 'svm' else 'rf'}_scenario_{scenario_id:02d}.pkl")
 
     val_f1 = compute_metrics(y_val, val_pred)["f1_weighted"]
