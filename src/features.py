@@ -47,7 +47,7 @@ def _pixels_to_hsv(pixels_bgr: np.ndarray) -> np.ndarray:
 
 
 def extract_color_histogram(img_bgr: np.ndarray, segmented: bool = True) -> np.ndarray:
-    """HSV histogram: 64 bins per channel → 192 dim."""
+    """HSV histogram: 64 bins per channel -> 192 dim."""
     pixels = get_object_pixels(img_bgr, segmented)
     hsv = _pixels_to_hsv(pixels)
     if len(hsv) == 0:
@@ -62,7 +62,7 @@ def extract_color_histogram(img_bgr: np.ndarray, segmented: bool = True) -> np.n
 
 
 def extract_color_moments(img_bgr: np.ndarray, segmented: bool = True) -> np.ndarray:
-    """Mean, std, skewness per HSV channel → 9 dim."""
+    """Mean, std, skewness per HSV channel -> 9 dim."""
     pixels = get_object_pixels(img_bgr, segmented)
     hsv = _pixels_to_hsv(pixels)
     if len(hsv) == 0:
@@ -84,7 +84,7 @@ def extract_color_moments(img_bgr: np.ndarray, segmented: bool = True) -> np.nda
 def extract_glcm_features(img_bgr: np.ndarray, segmented: bool = True) -> np.ndarray:
     """
     GLCM on grayscale: d=[1,2], angles=[0,45,90,135].
-    Average contrast, energy, homogeneity, correlation → 4 dim.
+    Average contrast, energy, homogeneity, correlation -> 4 dim.
     """
     img_u8 = to_uint8(img_bgr)
 
@@ -115,7 +115,7 @@ def extract_glcm_features(img_bgr: np.ndarray, segmented: bool = True) -> np.nda
 
 
 def extract_lbp_features(img_bgr: np.ndarray, segmented: bool = True) -> np.ndarray:
-    """LBP uniform P=8, R=1 → 10 dim histogram."""
+    """LBP uniform P=8, R=1 -> 10 dim histogram."""
     img_u8 = to_uint8(img_bgr)
 
     gray = cv2.cvtColor(img_u8, cv2.COLOR_BGR2GRAY)

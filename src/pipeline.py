@@ -27,7 +27,7 @@ def process_image(
     extract_feat: bool = False,
 ) -> dict[str, Any]:
     """
-    Full pipeline: preprocess → (restore) → enhance → (segment) → (features).
+    Full pipeline: preprocess -> (restore) -> enhance -> (segment) -> (features).
 
     Stages:
         - restoration: "ssr" applies Single-Scale Retinex illumination
@@ -115,7 +115,7 @@ def batch_extract_features(
 ) -> tuple[np.ndarray, list[int]]:
     """
     Extract features for a list of image paths.
-    Returns (X, valid_indices) — rows aligned with valid_indices into filepaths.
+    Returns (X, valid_indices) - rows aligned with valid_indices into filepaths.
     """
     from tqdm import tqdm
 

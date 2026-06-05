@@ -5,7 +5,7 @@ target-version = "py310"
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
 ignore = [
-    "E501",   # line too long — handled separately
+    "E501",   # line too long - handled separately
 ]
 
 [tool.ruff.lint.isort]

@@ -18,7 +18,7 @@ def build_svm_pipeline(random_state: int = 42, cv: int = 3, n_jobs: int = -1, ve
 
     The grid is intentionally compact (4 candidates x 3 folds = 12 fits). An
     exhaustive grid over C and gamma adds hours of compute on a large dataset
-    for negligible accuracy gain — not worth it for this project, where the
+    for negligible accuracy gain - not worth it for this project, where the
     focus is the pipeline and analysis, not squeezing out the last F1 point.
     Adding gamma=0.01 alongside 'scale' ensures a fairer comparison vs CNN.
     """

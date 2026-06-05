@@ -11,8 +11,8 @@ import numpy as np
 def to_uint8(img: np.ndarray) -> np.ndarray:
     """Convert any image array to uint8 BGR.
 
-    - uint8 input  → returned as-is (zero-copy).
-    - float input  → scaled ×255, clipped to [0, 255], cast to uint8.
+    - uint8 input  -> returned as-is (zero-copy).
+    - float input  -> scaled x255, clipped to [0, 255], cast to uint8.
 
     This is the single canonical conversion used across the entire pipeline.
     """
@@ -80,11 +80,11 @@ def preprocess_pipeline(
     apply_restoration: bool = True,
 ) -> np.ndarray | None:
     """
-    Full preprocess: load → resize → (optional) SSR restoration.
+    Full preprocess: load -> resize -> (optional) SSR restoration.
     Returns uint8 BGR or None if file is corrupt / unreadable.
 
     Reads the file exactly once (previously check_integrity read it once, then
-    cv2.imread read it again — now merged into a single read).
+    cv2.imread read it again - now merged into a single read).
     """
     img = cv2.imread(str(path))
     if img is None or img.size == 0:

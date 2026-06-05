@@ -50,7 +50,7 @@ def make_nb(cells):
     }
 
 
-# ── Sel setup Kaggle (sama untuk semua notebook) ─────────────────────────
+# -- Sel setup Kaggle (sama untuk semua notebook) -------------------------
 KAGGLE_SETUP = code_cell(
     "# ============================================================\n"
     "# Setup cell - Kaggle Notebooks (Kaggle-only). Jalankan PALING ATAS.\n"
@@ -130,13 +130,13 @@ NEW_ROOT = (
 )
 
 
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 # 01_eda.ipynb
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 nb01 = make_nb(
     [
         md_cell(
-            "# 01 — EDA & Data Preparation\n"
+            "# 01 - EDA & Data Preparation\n"
             "\n"
             "Distribusi dataset, visualisasi sampel, pemeriksaan imbalance,"
             " dan pembuatan split stratified."
@@ -211,13 +211,13 @@ nb01 = make_nb(
 )
 
 
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 # 02_experiments_classical.ipynb
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 nb02 = make_nb(
     [
         md_cell(
-            "# 02 — Eksperimen Klasik (Skenario 1–9)\n"
+            "# 02 - Eksperimen Klasik (Skenario 1-9)\n"
             "\n"
             "SVM & Random Forest dengan feature engineering manual. Tiap skenario\n"
             "mengubah **satu variabel** untuk isolasi efek (restorasi, enhancement,\n"
@@ -245,11 +245,11 @@ nb02 = make_nb(
             "print(len(train), len(val), len(test))\n"
         ),
         md_cell(
-            "## Skenario 1–4: Baseline, Restorasi (SSR), Enhancement\n"
+            "## Skenario 1-4: Baseline, Restorasi (SSR), Enhancement\n"
             "\n"
             "- **S1** = baseline mentah (tanpa restorasi, tanpa enhancement)\n"
             "- **S2** = + restorasi SSR (isolasi efek koreksi pencahayaan vs S1)\n"
-            "- **S3/S4** = SSR + CLAHE / gamma. E* dipilih dari S2–S4 (val F1)."
+            "- **S3/S4** = SSR + CLAHE / gamma. E* dipilih dari S2-S4 (val F1)."
         ),
         code_cell(
             "val_f1_map = {}\n"
@@ -272,7 +272,7 @@ nb02 = make_nb(
             'print(f"\\nE* (enhancement terbaik): {best_enh}")\n'
         ),
         md_cell(
-            "## Skenario 5–9: Segmentasi, Ablasi Fitur, Random Forest\n"
+            "## Skenario 5-9: Segmentasi, Ablasi Fitur, Random Forest\n"
             "\n"
             "- **S5** = E* + segmentasi, semua fitur, SVM (pipeline klasik penuh)\n"
             "- **S6/S7/S8** = ablasi fitur (warna saja / tekstur saja / bentuk saja)\n"
@@ -328,13 +328,13 @@ nb02 = make_nb(
 )
 
 
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 # 03_experiments_cnn.ipynb
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 nb03 = make_nb(
     [
         md_cell(
-            "# 03 — Eksperimen CNN (Skenario 10–11)\n"
+            "# 03 - Eksperimen CNN (Skenario 10-11)\n"
             "\n"
             "MobileNetV2 two-stage fine-tuning, Grad-CAM, McNemar vs S5.\n"
             "- **S10** = SSR + E* + segmentasi (full pipeline klasik, diganti CNN)\n"
@@ -429,8 +429,8 @@ nb03 = make_nb(
             "class_weight = {int(c): float(w) for c, w in zip(classes, weights)}\n"
             "class_weight\n"
         ),
-        md_cell("## Skenario 10: CNN — SSR + E* + Segmentasi (mirror S5)"),
-        md_cell("### Stage 1 — Base frozen (20 epoch)"),
+        md_cell("## Skenario 10: CNN - SSR + E* + Segmentasi (mirror S5)"),
+        md_cell("### Stage 1 - Base frozen (20 epoch)"),
         code_cell(
             "model_s10 = build_mobilenetv2(num_classes=2)\n"
             "model_s10 = compile_mobilenet(model_s10, learning_rate=1e-4)\n"
@@ -441,7 +441,7 @@ nb03 = make_nb(
             "    class_weight=class_weight, callbacks=cb_s10,\n"
             ")\n"
         ),
-        md_cell("### Stage 2 — Fine-tune 20 lapisan terakhir (50 epoch)"),
+        md_cell("### Stage 2 - Fine-tune 20 lapisan terakhir (50 epoch)"),
         code_cell(
             "model_s10 = unfreeze_last_layers(model_s10, n=20)\n"
             "model_s10 = compile_mobilenet(model_s10, learning_rate=1e-5)\n"
@@ -477,8 +477,8 @@ nb03 = make_nb(
             '                      save_path=paths["figures_confusion"] / "scenario_10.png")\n'
             "metrics_s10\n"
         ),
-        md_cell("## Skenario 11: CNN — Tanpa Restorasi, Tanpa Enhancement (mirror S1)"),
-        md_cell("### Stage 1 — Base frozen (20 epoch)"),
+        md_cell("## Skenario 11: CNN - Tanpa Restorasi, Tanpa Enhancement (mirror S1)"),
+        md_cell("### Stage 1 - Base frozen (20 epoch)"),
         code_cell(
             "model_s11 = build_mobilenetv2(num_classes=2)\n"
             "model_s11 = compile_mobilenet(model_s11, learning_rate=1e-4)\n"
@@ -489,7 +489,7 @@ nb03 = make_nb(
             "    class_weight=class_weight, callbacks=cb_s11,\n"
             ")\n"
         ),
-        md_cell("### Stage 2 — Fine-tune 20 lapisan terakhir (50 epoch)"),
+        md_cell("### Stage 2 - Fine-tune 20 lapisan terakhir (50 epoch)"),
         code_cell(
             "model_s11 = unfreeze_last_layers(model_s11, n=20)\n"
             "model_s11 = compile_mobilenet(model_s11, learning_rate=1e-5)\n"
@@ -538,12 +538,12 @@ nb03 = make_nb(
             "    )\n"
             "    y_pred_s5 = s5_model.predict(X_test_s5)\n"
             "\n"
-            "    # 1. S10 (CNN full) vs S5 (SVM full) — apakah CNN signifikan lebih baik?\n"
+            "    # 1. S10 (CNN full) vs S5 (SVM full) - apakah CNN signifikan lebih baik?\n"
             "    stat, pval, concl = mcnemar_test(y_true_s10, y_pred_s10, y_pred_s5)\n"
             '    append_significance_test("S10 vs S5 (CNN vs SVM)", "S10", "S5", stat, pval, concl, paths["metrics"])\n'
             "    print('S10 vs S5:', stat, pval, concl)\n"
             "\n"
-            "    # 2. S11 (CNN raw) vs S1 (SVM raw) — perbandingan baseline raw\n"
+            "    # 2. S11 (CNN raw) vs S1 (SVM raw) - perbandingan baseline raw\n"
             "    from src.experiments import extract_split_matrix as esm\n"
             '    X_test_s1, _, _ = esm(test_df, "none", False, "all", paths["data_processed"], restoration="none")\n'
             "    # S1 tidak di-save modelnya karena bukan model utama; re-train cepat (hanya 12 fit).\n"
@@ -560,14 +560,14 @@ nb03 = make_nb(
             '    append_significance_test("S11 vs S1 (CNN-raw vs SVM-raw)", "S11", "S1", stat2, pval2, concl2, paths["metrics"])\n'
             "    print('S11 vs S1:', stat2, pval2, concl2)\n"
             "\n"
-            "    # 3. S10 vs S11 — apakah full pipeline CNN > raw CNN?\n"
+            "    # 3. S10 vs S11 - apakah full pipeline CNN > raw CNN?\n"
             "    stat3, pval3, concl3 = mcnemar_test(y_true_s10, y_pred_s10, y_pred_s11)\n"
             '    append_significance_test("S10 vs S11 (full vs raw CNN)", "S10", "S11", stat3, pval3, concl3, paths["metrics"])\n'
             "    print('S10 vs S11:', stat3, pval3, concl3)\n"
             "else:\n"
             '    print("Model S5 tidak ditemukan. Pastikan notebook 02 sudah dijalankan.")\n'
         ),
-        md_cell("## Grad-CAM (Skenario 10 — CNN full pipeline)"),
+        md_cell("## Grad-CAM (Skenario 10 - CNN full pipeline)"),
         code_cell(
             "import matplotlib.pyplot as plt\n"
             "\n"
@@ -601,13 +601,13 @@ nb03 = make_nb(
 )
 
 
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 # 04_results_summary.ipynb
-# ══════════════════════════════════════════════════════════════════════════
+# ==========================================================================
 nb04 = make_nb(
     [
         md_cell(
-            "# 04 — Ringkasan Hasil\n"
+            "# 04 - Ringkasan Hasil\n"
             "\n"
             "Tabel 3, plot komparatif F1, analisis segmentation failures, feature importance."
         ),
@@ -624,7 +624,7 @@ nb04 = make_nb(
             "paths = get_project_paths()\n"
             'metrics_dir = paths["metrics"]\n'
         ),
-        md_cell("## Tabel 3 — Ringkasan Semua Skenario"),
+        md_cell("## Tabel 3 - Ringkasan Semua Skenario"),
         code_cell("summary = print_summary_table(metrics_dir)\nsummary\n"),
         md_cell("## Plot Komparatif F1-Score"),
         code_cell(
@@ -656,7 +656,7 @@ nb04 = make_nb(
             "else:\n"
             '    print("Jalankan notebook 02 dan 03 untuk uji McNemar.")\n'
         ),
-        md_cell("## Feature Importance (Skenario 9 — RF)"),
+        md_cell("## Feature Importance (Skenario 9 - RF)"),
         code_cell(
             "import joblib\n"
             "\n"

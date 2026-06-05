@@ -45,7 +45,7 @@ def mcnemar_test(
     d = int(np.sum((y_pred_a != y_true) & (y_pred_b != y_true)))
 
     if b + c == 0:
-        # Both models agree on every sample — test is undefined; treat as non-significant.
+        # Both models agree on every sample - test is undefined; treat as non-significant.
         return 0.0, 1.0, "tidak signifikan"
 
     table = [[a, b], [c, d]]
@@ -214,7 +214,7 @@ def build_gradcam_model(model: Any, last_conv_layer_name: str | None = None) -> 
     """Build the Grad-CAM sub-model once and reuse across many images.
 
     Constructing a new tf.keras.Model on every call (as the old make_gradcam_heatmap
-    did) re-allocates the TF graph each time — expensive for loops over hundreds of
+    did) re-allocates the TF graph each time - expensive for loops over hundreds of
     images.  Build this once, then pass it to make_gradcam_heatmap.
 
     Usage::
@@ -257,14 +257,14 @@ def make_gradcam_heatmap(
 
     Why not a functional sub-model: when the target feature map lives inside a
     *nested* model (MobileNetV2 wrapped as a single layer), Keras 3 cannot
-    traverse `Model(model.inputs, [nested.output, model.output])` — calling it
+    traverse `Model(model.inputs, [nested.output, model.output])` - calling it
     raises ``KeyError`` in ``_run_through_graph``. Replaying layer-by-layer and
     watching the intermediate tensor avoids that entirely and works on both
     Keras 2 and Keras 3.
 
     Args:
         model:      Trained Keras classifier. Assumed to be a linear stack of
-                    layers (Input → feature extractor → head), which is the case
+                    layers (Input -> feature extractor -> head), which is the case
                     for ``build_mobilenetv2``.
         img_array:  Preprocessed image, shape (1, H, W, C).
         last_conv_layer_name: Optional explicit feature-map layer name. When

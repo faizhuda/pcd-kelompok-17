@@ -175,7 +175,7 @@ def build_dataset_index(raw_dir: str | Path) -> pd.DataFrame:
 
 def make_splits(df: pd.DataFrame, seed: int = SEED) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Stratified 70% train / 15% val / 15% test by commodity × label.
+    Stratified 70% train / 15% val / 15% test by commodity x label.
     """
     work = df.copy()
     if "strat_key" not in work.columns:
@@ -219,7 +219,7 @@ def save_splits(
             try:
                 rec["filepath"] = str(Path(rec["filepath"]).relative_to(root).as_posix())
             except ValueError:
-                # filepath is already relative or outside project root — keep as-is
+                # filepath is already relative or outside project root - keep as-is
                 rec["filepath"] = Path(rec["filepath"]).as_posix()
             result.append(rec)
         return result
@@ -340,7 +340,7 @@ def download_kaggle_dataset(
     target = Path(target_dir)
     target.mkdir(parents=True, exist_ok=True)
 
-    print(f"Downloading dataset '{slug}' via kagglehub …")
+    print(f"Downloading dataset '{slug}' via kagglehub ...")
     try:
         downloaded = Path(kagglehub.dataset_download(slug))
     except Exception as exc:
@@ -376,7 +376,7 @@ def download_kaggle_dataset(
             shutil.copy2(item, dest)
             copied += 1
 
-    print(f"Done — {copied} new files copied to {target} ({len(image_files) - copied} already present).")
+    print(f"Done - {copied} new files copied to {target} ({len(image_files) - copied} already present).")
     return target
 
 

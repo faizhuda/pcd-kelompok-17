@@ -12,7 +12,7 @@ def _make_img(h: int = 64, w: int = 64) -> np.ndarray:
 
 
 def _make_dark_img() -> np.ndarray:
-    """Very dark image — should trigger gamma > 1."""
+    """Very dark image - should trigger gamma > 1."""
     return np.full((64, 64, 3), 10, dtype=np.uint8)
 
 

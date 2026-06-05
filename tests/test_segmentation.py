@@ -16,7 +16,7 @@ def _make_black_img(h: int = 64, w: int = 64) -> np.ndarray:
 
 
 def _make_bright_circle_img(h: int = 64, w: int = 64) -> np.ndarray:
-    """Image with a bright green circle on black background — easy to segment."""
+    """Image with a bright green circle on black background - easy to segment."""
     import cv2
 
     img = np.zeros((h, w, 3), dtype=np.uint8)
@@ -45,7 +45,7 @@ def test_segment_mask_binary():
 
 
 def test_fallback_triggered_on_black_image():
-    """All-black image → object ratio ≈ 0 → fallback must be True."""
+    """All-black image -> object ratio ~ 0 -> fallback must be True."""
     img = _make_black_img()
     _, _, ratio, used_fallback = segment_fruit(img)
     assert used_fallback is True

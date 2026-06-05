@@ -53,7 +53,7 @@ def extract_split_matrix(
             if cache_ok:
                 valid_df = df.iloc[valid_idx].reset_index(drop=True)
                 return data["X"], data["y"], valid_df
-            # Stale/mismatched cache (different split or old format) → recompute.
+            # Stale/mismatched cache (different split or old format) -> recompute.
 
     from src.utils import get_project_paths
 
@@ -93,11 +93,11 @@ def run_classical_scenario(
     models_dir: Path,
     cache_dir: Path | None = None,
 ) -> dict[str, Any]:
-    """Train and evaluate one classical scenario (scenario_id 1–8).
+    """Train and evaluate one classical scenario (scenario_id 1-8).
 
     Raises:
         KeyError: if scenario_id is not in SCENARIO_CONFIG (classical scenarios).
-            CNN scenarios (9–10, MobileNetV2) are handled in notebooks/03_experiments_cnn.ipynb.
+            CNN scenarios (9-10, MobileNetV2) are handled in notebooks/03_experiments_cnn.ipynb.
     """
     from src.utils import read_best_enhancement
 
@@ -105,7 +105,7 @@ def run_classical_scenario(
         valid = sorted(SCENARIO_CONFIG.keys())
         raise KeyError(
             f"scenario_id={scenario_id!r} not found. "
-            f"Classical scenarios are {valid[0]}–{valid[-1]}. "
+            f"Classical scenarios are {valid[0]}-{valid[-1]}. "
             "CNN scenarios are run directly in notebooks/03_experiments_cnn.ipynb."
         )
 

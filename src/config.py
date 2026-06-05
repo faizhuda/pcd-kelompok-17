@@ -10,11 +10,11 @@ SEGMENTATION_FALLBACK_RATIO: float = 0.05
 
 # Classical ML scenarios (1-9). Each row changes ONE variable vs a sibling so
 # every comparison in the report isolates a single factor:
-#   - restoration:  S1 (none, raw baseline)  vs  S2 (ssr)          → value of SSR
-#   - enhancement:  S2 (none) vs S3 (clahe) vs S4 (gamma)          → pick E*
-#   - segmentation: S5 (E*+seg) vs the E* no-seg sibling (S2/3/4)  → value of segmentation
-#   - features:     S5 (all) vs S6 (color) vs S7 (texture) vs S8 (shape) → which features matter
-#   - classifier:   S5 (SVM) vs S9 (RF)                            → model choice
+#   - restoration:  S1 (none, raw baseline)  vs  S2 (ssr)          -> value of SSR
+#   - enhancement:  S2 (none) vs S3 (clahe) vs S4 (gamma)          -> pick E*
+#   - segmentation: S5 (E*+seg) vs the E* no-seg sibling (S2/3/4)  -> value of segmentation
+#   - features:     S5 (all) vs S6 (color) vs S7 (texture) vs S8 (shape) -> which features matter
+#   - classifier:   S5 (SVM) vs S9 (RF)                            -> model choice
 # "enhancement": "best" is resolved at runtime from results/metrics/best_enhancement.txt.
 # CNN scenarios (10 segmented+E*, 11 raw) are handled in notebooks/03_experiments_cnn.ipynb.
 SCENARIO_CONFIG: dict[int, dict[str, Any]] = {

@@ -32,7 +32,7 @@ def test_compute_metrics_keys_and_value():
 
 
 def test_mcnemar_identical_predictions_non_significant():
-    # b + c == 0 → test is undefined → treated as non-significant.
+    # b + c == 0 -> test is undefined -> treated as non-significant.
     y_true = np.array([0, 1, 0, 1])
     pred = np.array([0, 1, 0, 1])
     stat, pval, conclusion = mcnemar_test(y_true, pred, pred)
@@ -41,7 +41,7 @@ def test_mcnemar_identical_predictions_non_significant():
 
 
 def test_mcnemar_strong_disagreement_significant():
-    # Model A correct on all, Model B wrong on all → maximal discordance.
+    # Model A correct on all, Model B wrong on all -> maximal discordance.
     n = 40
     y_true = np.zeros(n, dtype=int)
     pred_a = np.zeros(n, dtype=int)

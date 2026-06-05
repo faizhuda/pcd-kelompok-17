@@ -71,7 +71,7 @@ def test_label_encode_series_preexisting_nan_raises():
 
 
 def test_label_encode_ndarray_case_sensitive_raises():
-    """'Fresh' (uppercase) is not a valid label — must raise ValueError."""
+    """'Fresh' (uppercase) is not a valid label - must raise ValueError."""
     y = np.array(["fresh", "Fresh"])
     with pytest.raises(ValueError, match="Unknown label"):
         label_encode(y)
