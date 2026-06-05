@@ -173,7 +173,9 @@ def run_classical_scenario(
     if scenario_id in (5, 9):
         joblib.dump(model, models_dir / f"{'svm' if model_type == 'svm' else 'rf'}_scenario_{scenario_id:02d}.pkl")
     if scenario_id == 5:
-        pred_df = test_df.iloc[test_v].copy()
+        # test_v is already the filtered valid-rows DataFrame (aligned with y_pred);
+        # do NOT re-index test_df with it. Saved for per-commodity analysis in nb04.
+        pred_df = test_v.reset_index(drop=True).copy()
         pred_df["pred"] = y_pred
         pred_df.to_csv(metrics_dir / "predictions_s5.csv", index=False)
 
