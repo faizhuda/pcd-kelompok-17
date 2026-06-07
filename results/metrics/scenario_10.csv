@@ -1,0 +1,2 @@
+scenario_id,restoration,enhancement,segmentation,features,model,accuracy,precision_weighted,recall_weighted,f1_weighted,inference_time_ms_per_image,n_test_samples
+10,ssr,clahe,True,cnn,MobileNetV2,0.9829312699135184,0.9829607034474858,0.9829312699135184,0.9829345021930658,28.90565108989535,4394

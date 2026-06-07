@@ -1,0 +1,2 @@
+scenario_id,restoration,enhancement,segmentation,features,model,accuracy,precision_weighted,recall_weighted,f1_weighted,inference_time_ms_per_image,n_test_samples
+6,ssr,clahe,True,color,SVM,0.9355939918070095,0.9355863353753672,0.9355939918070095,0.9355877812192421,2.355147387573896,4394

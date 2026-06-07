@@ -221,14 +221,6 @@ __marimo__/
 data/raw/
 data/processed/
 data/splits.json
-results/models/*.h5
-results/models/*.pkl
-results/metrics/*.csv
-results/metrics/*.txt
-!results/metrics/.gitkeep
-results/figures/**/*.png
-results/figures/**/*.jpg
-!results/figures/**/.gitkeep
 
 # Scratch files & build artifacts
 scratch/

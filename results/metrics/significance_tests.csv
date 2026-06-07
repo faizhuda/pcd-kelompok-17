@@ -1,0 +1,7 @@
+comparison,model_a,model_b,statistic,p_value,conclusion
+S2 vs S1 (SSR),S2,S1,44.55,2.479435013786053e-11,signifikan
+E*(clahe) vs S2,S3,S2,8.697986577181208,0.0031856173074693715,signifikan
+S5 vs E*-noseg (segmentasi),S5,S3,1.5648148148148149,0.21096162903585636,tidak signifikan
+S10 vs S5 (CNN vs SVM),S10,S5,70.33196721311475,5.0118909082439964e-17,signifikan
+S11 vs S1 (CNN-raw vs SVM-raw),S11,S1,37.751633986928105,8.03493885577273e-10,signifikan
+S10 vs S11 (full vs raw CNN),S10,S11,5.95945945945946,0.014638528457408349,signifikan
