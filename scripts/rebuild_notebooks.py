@@ -347,6 +347,7 @@ nb03 = make_nb(
         code_cell(
             NEW_ROOT
             + "import numpy as np\n"
+            "import pandas as pd\n"
             "import tensorflow as tf\n"
             "from sklearn.utils.class_weight import compute_class_weight\n"
             "\n"
