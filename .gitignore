@@ -224,6 +224,7 @@ data/splits.json
 results/models/*.h5
 results/models/*.pkl
 results/metrics/*.csv
+results/metrics/*.txt
 !results/metrics/.gitkeep
 results/figures/**/*.png
 results/figures/**/*.jpg
