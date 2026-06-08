@@ -274,7 +274,13 @@ nb01 = make_nb(
         ),
         code_cell(
             "def _hsv_histograms(filepaths, n_sample=500):\n"
-            '    """Compute mean HSV histograms over a sample of images."""\n'
+            '    """Mean of PER-IMAGE-NORMALIZED HSV histograms over a sample.\n'
+            "\n"
+            "    Each image's histogram is normalized to sum to 1 BEFORE averaging, so\n"
+            "    the result is a probability distribution independent of image resolution.\n"
+            "    Without this, the dataset's heterogeneous resolution (100px–4160px) would\n"
+            "    make the plot reflect image size rather than color distribution.\n"
+            '    """\n'
             "    h_acc = np.zeros(180, dtype=np.float64)\n"
             "    s_acc = np.zeros(256, dtype=np.float64)\n"
             "    v_acc = np.zeros(256, dtype=np.float64)\n"
@@ -284,9 +290,14 @@ nb01 = make_nb(
             "        if img is None:\n"
             "            continue\n"
             "        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)\n"
-            "        h_acc += cv2.calcHist([hsv], [0], None, [180], [0, 180]).flatten()\n"
-            "        s_acc += cv2.calcHist([hsv], [1], None, [256], [0, 256]).flatten()\n"
-            "        v_acc += cv2.calcHist([hsv], [2], None, [256], [0, 256]).flatten()\n"
+            "        h = cv2.calcHist([hsv], [0], None, [180], [0, 180]).flatten()\n"
+            "        s = cv2.calcHist([hsv], [1], None, [256], [0, 256]).flatten()\n"
+            "        v = cv2.calcHist([hsv], [2], None, [256], [0, 256]).flatten()\n"
+            "        # Normalize each image to a probability distribution (sum=1) so large\n"
+            "        # images don't dominate the average.\n"
+            "        h_acc += h / max(h.sum(), 1)\n"
+            "        s_acc += s / max(s.sum(), 1)\n"
+            "        v_acc += v / max(v.sum(), 1)\n"
             "        count += 1\n"
             "    if count:\n"
             "        h_acc /= count; s_acc /= count; v_acc /= count\n"
@@ -308,12 +319,12 @@ nb01 = make_nb(
             '    ax.plot(rotten_hist, color="brown", label="Rotten", alpha=0.8, linewidth=1.5)\n'
             "    ax.set_title(f\"Distribusi {title}\")\n"
             "    ax.set_xlabel(xlabel)\n"
-            '    ax.set_ylabel("Rata-rata frekuensi piksel")\n'
+            '    ax.set_ylabel("Proporsi piksel (rata-rata, ternormalisasi)")\n'
             "    ax.legend()\n"
             "\n"
             "plt.suptitle(\n"
-            '    "Distribusi Warna HSV: Fresh vs Rotten\\n"\n'
-            '    "Perbedaan pada H, S, V memotivasi HSV histogram sebagai fitur warna utama",\n'
+            '    "Distribusi Warna HSV: Fresh vs Rotten (ternormalisasi per-citra)\\n"\n'
+            '    "Perbedaan bentuk pada H, S, V memotivasi HSV histogram sebagai fitur warna utama",\n'
             "    fontsize=10,\n"
             ")\n"
             "plt.tight_layout()\n"
@@ -385,7 +396,17 @@ nb01 = make_nb(
             "plt.tight_layout()\n"
             "plt.show()\n"
         ),
-        md_cell("### 5c. Segmentasi Otsu + Morfologi"),
+        md_cell(
+            "### 5c. Segmentasi Otsu + Morfologi\n"
+            "\n"
+            "**Temuan penting:** pada dataset ini segmentasi Otsu cenderung memilih *seluruh* frame\n"
+            "(object_ratio ≈ 100%), sehingga mask praktis tidak mengisolasi objek. Penyebabnya:\n"
+            "background hampir seragam putih + SSR/CLAHE menaikkan saturasi, sehingga gabungan\n"
+            "(`mask_saturasi OR mask_grayscale`) menutupi hampir semua piksel. Mask ditampilkan\n"
+            "eksplisit hitam=0 / putih=255 agar terlihat apa adanya (bukan artefak rendering).\n"
+            "Konsekuensi ini konsisten dengan hasil eksperimen: S5 (segmentasi) ≈ S3 (tanpa\n"
+            "segmentasi) dan uji McNemar tidak signifikan (p≈0.21)."
+        ),
         code_cell(
             "# Use E*='clahe' as a stand-in for visualization (actual E* resolved at runtime in nb02)\n"
             "fig, axes = plt.subplots(2, 4, figsize=(16, 8))\n"
@@ -394,20 +415,25 @@ nb01 = make_nb(
             "    ssr_img  = preprocess_from_array(img_bgr, apply_restoration=True)\n"
             '    enhanced = apply_enhancement(ssr_img, "clahe")\n'
             "    masked, binary_mask, obj_ratio, used_fallback = segment_fruit(enhanced)\n"
-            '    fallback_note = " [fallback]" if used_fallback else f" ({obj_ratio:.0%} fg)"\n'
+            '    ratio_note = "[FALLBACK] " if used_fallback else ""\n'
             "    columns = [\n"
             '        (cv2.cvtColor(cv2.resize(img_bgr, (224, 224)), cv2.COLOR_BGR2RGB), "Original", None),\n'
             '        (cv2.cvtColor(ssr_img,  cv2.COLOR_BGR2RGB), "SSR", None),\n'
-            '        (binary_mask, f"Mask Otsu{fallback_note}", "gray"),\n'
+            '        (binary_mask, f"Mask Otsu\\n{ratio_note}foreground={obj_ratio:.0%}", "gray"),\n'
             '        (cv2.cvtColor(masked, cv2.COLOR_BGR2RGB), "Hasil Segmentasi", None),\n'
             "    ]\n"
             "    for col, (image, title, cmap) in enumerate(columns):\n"
-            "        axes[row, col].imshow(image, cmap=cmap)\n"
+            "        # Fix vmin/vmax for the mask so a uniform all-255 array renders WHITE\n"
+            "        # (matplotlib otherwise maps a constant array to the colormap minimum = black).\n"
+            "        if cmap == \"gray\":\n"
+            "            axes[row, col].imshow(image, cmap=cmap, vmin=0, vmax=255)\n"
+            "        else:\n"
+            "            axes[row, col].imshow(image, cmap=cmap)\n"
             "        axes[row, col].set_title(f\"{label}\\n{title}\", fontsize=9)\n"
             '        axes[row, col].axis("off")\n'
             "plt.suptitle(\n"
             '    "Segmentasi Otsu + Morfologi (ellipse kernel open→close + largest contour)\\n"\n'
-            '    "Memisahkan ROI buah/sayur dari background; mereduksi noise piksel non-objek",\n'
+            '    "Pada dataset ini mask cenderung menutupi seluruh frame (foreground≈100%) → segmentasi tidak efektif",\n'
             "    fontsize=10,\n"
             ")\n"
             "plt.tight_layout()\n"
