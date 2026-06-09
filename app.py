@@ -218,6 +218,7 @@ st.markdown("""
         color: #0f172a !important;
     }
 </style>
+""", unsafe_allow_html=True)
 
 # ----------------------------------------------------
 # Model Loading Helper Functions (Cached)
