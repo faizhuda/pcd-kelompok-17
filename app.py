@@ -212,21 +212,36 @@ model_rf = load_rf_model()
 st.markdown('<div class="main-title">Fruit Quality Model Comparison</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">Compare classical Machine Learning vs Deep Learning on the Digital Image Processing (DIP) Pipeline</div>', unsafe_allow_html=True)
 
-# Sidebar
+# Sidebar Info
 st.sidebar.image("https://img.icons8.com/color/96/000000/apple.png", width=70)
-st.sidebar.markdown("### Image Processing Controls")
-uploaded_file = st.sidebar.file_uploader(
-    "Upload a fruit image...", 
-    type=["jpg", "jpeg", "png", "webp", "bmp"],
-    help="Support images: Apple, Banana, Tomato (Fresh or Rotten)"
-)
+st.sidebar.markdown("""
+### Model & Skenario:
+- **MobileNetV2 (CNN)**
+  - Skenario 10
+  - Deep Learning dengan fine-tuning 20 layer terakhir.
+- **SVM (Support Vector Machine)**
+  - Skenario 5
+  - Ekstraksi 220 fitur manual (Warna, Tekstur, Bentuk).
+- **Random Forest (RF)**
+  - Skenario 9
+  - Ekstraksi 220 fitur manual (Warna, Tekstur, Bentuk).
+""")
+
+# Upload section in the center
+col_up_1, col_up_2, col_up_3 = st.columns([1, 2, 1])
+with col_up_2:
+    uploaded_file = st.file_uploader(
+        "Unggah Gambar Buah Di Sini...", 
+        type=["jpg", "jpeg", "png", "webp", "bmp"],
+        help="Mendukung gambar: Apel, Pisang, Tomat (Segar atau Busuk)"
+    )
 
 # Main container
 if uploaded_file is None:
     # ----------------------------------------------------
     # Landing / Introduction Section
     # ----------------------------------------------------
-    st.info("💡 **Silakan unggah gambar buah di panel kiri untuk memulai analisis.**")
+    st.info("💡 **Silakan unggah gambar buah di atas untuk memulai analisis.**")
     
     st.markdown('<div class="section-header">Performance Overview (Historical Test Set)</div>', unsafe_allow_html=True)
     
@@ -358,7 +373,9 @@ else:
             
         with col4:
             st.markdown('<div class="dip-step-card"><div class="dip-step-title">Otsu Fruit Mask</div></div>', unsafe_allow_html=True)
-            st.image(mask, use_container_width=True)
+            # Convert single-channel mask to RGB to display reliably in Streamlit
+            mask_rgb = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
+            st.image(mask_rgb, use_container_width=True)
             st.caption(f"Obj ratio: {obj_ratio:.2%}")
             
         with col5:
