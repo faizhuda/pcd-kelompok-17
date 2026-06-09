@@ -210,12 +210,14 @@ st.markdown("""
 def load_mobilenet_model():
     model_path = project_root / "results" / "models" / "mobilenetv2_s10_stage2.h5"
     if not model_path.exists():
+        st.sidebar.error(f"CNN model path not found: {model_path}")
         return None
     try:
         import tensorflow as tf
         model = tf.keras.models.load_model(model_path)
         return model
-    except Exception:
+    except Exception as e:
+        st.sidebar.error(f"Failed to load CNN: {e}")
         return None
 
 @st.cache_resource
@@ -336,6 +338,9 @@ with col_up_2:
         type=["jpg", "jpeg", "png", "webp", "bmp"],
         help="Mendukung format gambar populer. File akan diproses secara paralel oleh seluruh skenario model."
     )
+    if uploaded_file is not None:
+        # Display a clean preview of the uploaded image right under the uploader
+        st.image(uploaded_file, caption="Gambar yang Diunggah", use_container_width=True)
 
 if uploaded_file is None:
     # ----------------------------------------------------
