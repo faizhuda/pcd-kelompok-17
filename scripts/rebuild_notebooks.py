@@ -166,6 +166,7 @@ import seaborn as sns
 
 from src.enhancement import apply_enhancement
 from src.preprocessing import check_integrity, preprocess_from_array
+preprocess_arr = preprocess_from_array
 from src.segmentation import segment_fruit
 from src.utils import (
     build_dataset_index,
