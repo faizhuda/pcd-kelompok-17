@@ -45,13 +45,13 @@ st.markdown("""
         color: #0f172a;
     }
     
-    /* Clean black card styles */
+    /* Clean white card styles */
     .saas-card {
-        background-color: #111827;
-        border: 1px solid #1f2937;
+        background-color: #ffffff;
+        border: 1px solid #f1f5f9;
         border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 10px 15px -3px rgba(0, 0, 0, 0.03);
         transition: transform 0.25s ease, box-shadow 0.25s ease;
         margin-bottom: 24px;
         height: 100%;
@@ -62,14 +62,14 @@ st.markdown("""
     }
     .saas-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
     }
     
     .card-title {
         margin-top: 0 !important;
         font-weight: 700 !important;
-        color: #ffffff !important;
-        border-bottom: 1px solid #1f2937 !important;
+        color: #0f172a !important;
+        border-bottom: 1px solid #f1f5f9 !important;
         padding-bottom: 8px !important;
         min-height: 56px !important;
         display: flex !important;
@@ -133,8 +133,8 @@ st.markdown("""
         border: 2px dashed #FF6B4A;
         border-radius: 16px;
         padding: 24px;
-        background-color: #111827;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        background-color: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
     }
     
     /* Zebra-striped comparison table */
@@ -145,27 +145,27 @@ st.markdown("""
         font-size: 0.95rem;
         border-radius: 12px;
         overflow: hidden;
-        border: 1px solid #1f2937;
-        background-color: #111827;
+        border: 1px solid #f1f5f9;
+        background-color: #ffffff;
     }
     .styled-table th {
-        background-color: #1f2937;
-        color: #9ca3af;
+        background-color: #f8fafc;
+        color: #475569;
         text-align: left;
         font-weight: 700;
         padding: 14px 16px;
-        border-bottom: 2px solid #374151;
+        border-bottom: 2px solid #f1f5f9;
     }
     .styled-table td {
         padding: 14px 16px;
-        border-bottom: 1px solid #1f2937;
-        color: #e5e7eb;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
     }
     .styled-table tbody tr:nth-of-type(even) {
-        background-color: #1f2937;
+        background-color: #f8fafc;
     }
     .styled-table tbody tr:hover {
-        background-color: #374151;
+        background-color: #f1f5f9;
         transition: background-color 0.2s ease;
     }
     
@@ -176,19 +176,19 @@ st.markdown("""
         align-items: center;
         gap: 10px;
         padding: 16px;
-        background-color: #1f2937;
+        background-color: #ffffff;
         border-radius: 12px;
-        border: 1px solid #374151;
+        border: 1px solid #f1f5f9;
         margin-bottom: 15px;
     }
     .pipeline-step {
-        background-color: #374151;
-        border: 1px solid #4b5563;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
         border-radius: 8px;
         padding: 8px 14px;
         font-size: 0.85rem;
         font-weight: 600;
-        color: #f3f4f6;
+        color: #334155;
     }
     .pipeline-arrow {
         color: #94a3b8;
@@ -198,8 +198,8 @@ st.markdown("""
     
     /* DIP Stage Step Cards styling */
     .dip-step-card {
-        background-color: #111827;
-        border: 1px solid #1f2937;
+        background-color: #ffffff;
+        border: 1px solid #f1f5f9;
         border-radius: 8px 8px 0 0;
         padding: 8px 12px;
         text-align: center;
@@ -208,7 +208,7 @@ st.markdown("""
     .dip-step-title {
         font-size: 0.85rem;
         font-weight: 700;
-        color: #ffffff;
+        color: #0f172a;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
@@ -278,27 +278,27 @@ with st.sidebar:
     
     # CNN Card
     st.markdown("""
-    <div style="background-color: #111827; padding: 16px; border-radius: 12px; border: 1px solid #1f2937; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);">
-        <h4 style="margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #ffffff;">MobileNetV2 (CNN)</h4>
-        <p style="margin: 0 0 10px 0; font-size: 0.75rem; color: #9ca3af; line-height: 1.3;">Scenario 10: Full Image Processing pipeline + Deep Learning Classification</p>
+    <div style="background-color: white; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+        <h4 style="margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #0f172a;">MobileNetV2 (CNN)</h4>
+        <p style="margin: 0 0 10px 0; font-size: 0.75rem; color: #64748b; line-height: 1.3;">Scenario 10: Full Image Processing pipeline + Deep Learning Classification</p>
         <span class="sidebar-badge">98.29% ACCURACY</span>
     </div>
     """, unsafe_allow_html=True)
     
     # SVM Card
     st.markdown("""
-    <div style="background-color: #111827; padding: 16px; border-radius: 12px; border: 1px solid #1f2937; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);">
-        <h4 style="margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #ffffff;">Support Vector Machine</h4>
-        <p style="margin: 0 0 10px 0; font-size: 0.75rem; color: #9ca3af; line-height: 1.3;">Scenario 5: 220 manual features (HSV, GLCM, LBP) + SVM Classifier</p>
+    <div style="background-color: white; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+        <h4 style="margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #0f172a;">Support Vector Machine</h4>
+        <p style="margin: 0 0 10px 0; font-size: 0.75rem; color: #64748b; line-height: 1.3;">Scenario 5: 220 manual features (HSV, GLCM, LBP) + SVM Classifier</p>
         <span class="sidebar-badge">95.29% ACCURACY</span>
     </div>
     """, unsafe_allow_html=True)
     
     # RF Card
     st.markdown("""
-    <div style="background-color: #111827; padding: 16px; border-radius: 12px; border: 1px solid #1f2937; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.15);">
-        <h4 style="margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #ffffff;">Random Forest</h4>
-        <p style="margin: 0 0 10px 0; font-size: 0.75rem; color: #9ca3af; line-height: 1.3;">Scenario 9: 220 manual features + Random Forest Classifier</p>
+    <div style="background-color: white; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+        <h4 style="margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #0f172a;">Random Forest</h4>
+        <p style="margin: 0 0 10px 0; font-size: 0.75rem; color: #64748b; line-height: 1.3;">Scenario 9: 220 manual features + Random Forest Classifier</p>
         <span class="sidebar-badge">93.79% ACCURACY</span>
     </div>
     """, unsafe_allow_html=True)
@@ -322,25 +322,25 @@ kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
 with kpi_col1:
     st.markdown("""
     <div class="saas-card">
-        <div style="font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px;">Best Accuracy</div>
+        <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Best Accuracy</div>
         <div style="font-size: 2.2rem; font-weight: 800; color: #FF6B4A; margin-top: 6px; letter-spacing: -1px;">98.29%</div>
-        <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px; font-weight: 500;">MobileNetV2 (Scenario 10)</div>
+        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; font-weight: 500;">MobileNetV2 (Scenario 10)</div>
     </div>
     """, unsafe_allow_html=True)
 with kpi_col2:
     st.markdown("""
     <div class="saas-card">
-        <div style="font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px;">Fastest Model</div>
-        <div style="font-size: 2.2rem; font-weight: 800; color: #ffffff; margin-top: 6px; letter-spacing: -1px;">Random Forest</div>
-        <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px; font-weight: 500;">0.013 ms / Image latency</div>
+        <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Fastest Model</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: #0f172a; margin-top: 6px; letter-spacing: -1px;">Random Forest</div>
+        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; font-weight: 500;">0.013 ms / Image latency</div>
     </div>
     """, unsafe_allow_html=True)
 with kpi_col3:
     st.markdown("""
     <div class="saas-card">
-        <div style="font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 1px;">Feature Extraction</div>
-        <div style="font-size: 2.2rem; font-weight: 800; color: #ffffff; margin-top: 6px; letter-spacing: -1px;">220 Dimensions</div>
-        <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px; font-weight: 500;">HSV Colors, GLCM Texture, Shape</div>
+        <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Feature Extraction</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: #0f172a; margin-top: 6px; letter-spacing: -1px;">220 Dimensions</div>
+        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; font-weight: 500;">HSV Colors, GLCM Texture, Shape</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -367,8 +367,8 @@ if uploaded_file is None:
     col_p_1, col_p_2 = st.columns(2)
     with col_p_1:
         st.markdown('<div class="saas-card">', unsafe_allow_html=True)
-        st.markdown("<h4 style='margin-top:0; font-weight: 700; color:#ffffff;'>Classical Machine Learning Pipeline (S5 & S9)</h4>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size:0.8rem; color:#9ca3af; margin-bottom: 15px;'>Citra mengalami koreksi iluminasi, segmentasi Otsu, ekstraksi manual (220 dimensi), dan klasifikasi menggunakan model SVM / RF.</p>", unsafe_allow_html=True)
+        st.markdown("<h4 style='margin-top:0; font-weight: 700; color:#0f172a;'>Classical Machine Learning Pipeline (S5 & S9)</h4>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:0.8rem; color:#64748b; margin-bottom: 15px;'>Citra mengalami koreksi iluminasi, segmentasi Otsu, ekstraksi manual (220 dimensi), dan klasifikasi menggunakan model SVM / RF.</p>", unsafe_allow_html=True)
         st.markdown("""
         <div class="pipeline-container">
             <span class="pipeline-step">Input Image</span>
@@ -388,8 +388,8 @@ if uploaded_file is None:
         
     with col_p_2:
         st.markdown('<div class="saas-card">', unsafe_allow_html=True)
-        st.markdown("<h4 style='margin-top:0; font-weight: 700; color:#ffffff;'>Deep Learning Pipeline (S10)</h4>", unsafe_allow_html=True)
-        st.markdown("<p style='font-size:0.8rem; color:#9ca3af; margin-bottom: 15px;'>Citra mengalami pra-proses (SSR, CLAHE, segmentasi) sebelum ditransfer ke CNN MobileNetV2 dengan fine-tuning 20 layer terakhir.</p>", unsafe_allow_html=True)
+        st.markdown("<h4 style='margin-top:0; font-weight: 700; color:#0f172a;'>Deep Learning Pipeline (S10)</h4>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:0.8rem; color:#64748b; margin-bottom: 15px;'>Citra mengalami pra-proses (SSR, CLAHE, segmentasi) sebelum ditransfer ke CNN MobileNetV2 dengan fine-tuning 20 layer terakhir.</p>", unsafe_allow_html=True)
         st.markdown("""
         <div class="pipeline-container">
             <span class="pipeline-step">Input Image</span>
@@ -428,51 +428,47 @@ if uploaded_file is None:
         
         # Performance Charts Column
         st.markdown('<div class="saas-card">', unsafe_allow_html=True)
-        st.markdown("<h4 style='margin-top:0; font-weight:700; color:#ffffff; margin-bottom: 15px;'>Model Performance Comparison Charts</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='margin-top:0; font-weight:700; color:#0f172a; margin-bottom: 15px;'>Model Performance Comparison Charts</h4>", unsafe_allow_html=True)
         
         fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
-        fig.patch.set_facecolor('#111827')
-        sns.set_theme(style="dark")
+        sns.set_theme(style="white")
         accent_color = "#FF6B4A"
         
         # 1. Accuracy
         sns.barplot(x="model", y="accuracy", data=df_metrics, ax=axes[0], color=accent_color, alpha=0.9, width=0.45)
-        axes[0].set_title("Test Accuracy Comparison", fontsize=11, fontweight="bold", pad=15, color="#ffffff")
-        axes[0].set_ylabel("Accuracy", fontsize=9, color="#9ca3af")
+        axes[0].set_title("Test Accuracy Comparison", fontsize=11, fontweight="bold", pad=15)
+        axes[0].set_ylabel("Accuracy", fontsize=9)
         axes[0].set_xlabel("", fontsize=9)
         axes[0].set_ylim(0.80, 1.0)
-        axes[0].tick_params(colors='#9ca3af')
         for p in axes[0].patches:
             axes[0].annotate(f"{p.get_height()*100:.2f}%", (p.get_x() + p.get_width() / 2., p.get_height() - 0.05),
                         ha='center', va='center', xytext=(0, 10), textcoords='offset points', fontsize=9, fontweight="bold", color="white")
         
         # 2. F1-Score
-        sns.barplot(x="model", y="f1_weighted", data=df_metrics, ax=axes[1], color="#3b82f6", alpha=0.9, width=0.45)
-        axes[1].set_title("Weighted F1-Score Comparison", fontsize=11, fontweight="bold", pad=15, color="#ffffff")
-        axes[1].set_ylabel("F1-Score", fontsize=9, color="#9ca3af")
+        sns.barplot(x="model", y="f1_weighted", data=df_metrics, ax=axes[1], color="#334155", alpha=0.9, width=0.45)
+        axes[1].set_title("Weighted F1-Score Comparison", fontsize=11, fontweight="bold", pad=15)
+        axes[1].set_ylabel("F1-Score", fontsize=9)
         axes[1].set_xlabel("", fontsize=9)
         axes[1].set_ylim(0.80, 1.0)
-        axes[1].tick_params(colors='#9ca3af')
         for p in axes[1].patches:
             axes[1].annotate(f"{p.get_height():.4f}", (p.get_x() + p.get_width() / 2., p.get_height() - 0.05),
                         ha='center', va='center', xytext=(0, 10), textcoords='offset points', fontsize=9, fontweight="bold", color="white")
         
         # 3. Latency
-        sns.barplot(x="model", y="inference_time_ms_per_image", data=df_metrics, ax=axes[2], color="#6b7280", alpha=0.9, width=0.45)
-        axes[2].set_title("Inference Latency per Image (ms)", fontsize=11, fontweight="bold", pad=15, color="#ffffff")
-        axes[2].set_ylabel("Latency (ms)", fontsize=9, color="#9ca3af")
+        sns.barplot(x="model", y="inference_time_ms_per_image", data=df_metrics, ax=axes[2], color="#cbd5e1", alpha=0.9, width=0.45)
+        axes[2].set_title("Inference Latency per Image (ms)", fontsize=11, fontweight="bold", pad=15)
+        axes[2].set_ylabel("Latency (ms)", fontsize=9)
         axes[2].set_xlabel("", fontsize=9)
-        axes[2].tick_params(colors='#9ca3af')
         for p in axes[2].patches:
             axes[2].annotate(f"{p.get_height():.3f} ms", (p.get_x() + p.get_width() / 2., p.get_height() + 0.1),
-                        ha='center', va='center', xytext=(0, 5), textcoords='offset points', fontsize=9, fontweight="bold", color="#ffffff")
+                        ha='center', va='center', xytext=(0, 5), textcoords='offset points', fontsize=9, fontweight="bold", color="#334155")
             
         for ax in axes:
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
-            ax.spines['left'].set_color("#374151")
-            ax.spines['bottom'].set_color("#374151")
-            ax.set_facecolor('#111827')
+            ax.spines['left'].set_color("#f1f5f9")
+            ax.spines['bottom'].set_color("#cbd5e1")
+            ax.tick_params(axis='both', colors='#475569', labelsize=9)
             
         plt.tight_layout()
         st.pyplot(fig)
@@ -480,7 +476,7 @@ if uploaded_file is None:
         
         # Comparison Table
         st.markdown('<div class="saas-card">', unsafe_allow_html=True)
-        st.markdown("<h4 style='margin-top:0; font-weight:700; color:#ffffff; margin-bottom: 15px;'>Model Performance Comparison Table</h4>", unsafe_allow_html=True)
+        st.markdown("<h4 style='margin-top:0; font-weight:700; color:#0f172a; margin-bottom: 15px;'>Model Performance Comparison Table</h4>", unsafe_allow_html=True)
         
         table_html = textwrap.dedent("""\
             <table class="styled-table">
@@ -619,32 +615,32 @@ else:
                 rf_confidence = rf_probs[rf_idx]
         
         # 2. Layout: Preprocessing Steps (Full Width)
-        st.markdown('<div class="section-header">1. Digital Image Processing (DIP) Pipeline Stages</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header" style="margin-bottom: 8px;">1. Digital Image Processing (DIP) Pipeline Stages</div>', unsafe_allow_html=True)
         
         p_col1, p_col2, p_col3, p_col4, p_col5 = st.columns(5)
         with p_col1:
             st.markdown('<div class="dip-step-card"><div class="dip-step-title">1. Resized</div></div>', unsafe_allow_html=True)
             st.image(img_resized_rgb, use_container_width=True)
-            st.markdown('<p style="font-size: 0.75rem; color: #9ca3af; text-align: center; margin-top: 4px;">224x224</p>', unsafe_allow_html=True)
+            st.caption("224x224")
         with p_col2:
             st.markdown('<div class="dip-step-card"><div class="dip-step-title">2. SSR</div></div>', unsafe_allow_html=True)
             st.image(img_ssr_rgb, use_container_width=True)
-            st.markdown('<p style="font-size: 0.75rem; color: #9ca3af; text-align: center; margin-top: 4px;">CIELAB L SSR</p>', unsafe_allow_html=True)
+            st.caption("CIELAB L SSR")
         with p_col3:
             st.markdown('<div class="dip-step-card"><div class="dip-step-title">3. CLAHE</div></div>', unsafe_allow_html=True)
             st.image(img_clahe_rgb, use_container_width=True)
-            st.markdown('<p style="font-size: 0.75rem; color: #9ca3af; text-align: center; margin-top: 4px;">Adaptive Hist</p>', unsafe_allow_html=True)
+            st.caption("Adaptive Hist")
         with p_col4:
             st.markdown('<div class="dip-step-card"><div class="dip-step-title">4. Mask</div></div>', unsafe_allow_html=True)
             st.image(mask_rgb, use_container_width=True)
-            st.markdown(f'<p style="font-size: 0.75rem; color: #9ca3af; text-align: center; margin-top: 4px;">Ratio: {obj_ratio:.1%}</p>', unsafe_allow_html=True)
+            st.caption(f"Ratio: {obj_ratio:.1%}")
         with p_col5:
             st.markdown('<div class="dip-step-card"><div class="dip-step-title">5. Segmented</div></div>', unsafe_allow_html=True)
             st.image(img_segmented_rgb, use_container_width=True)
-            st.markdown('<p style="font-size: 0.75rem; color: #9ca3af; text-align: center; margin-top: 4px;">Final Output</p>', unsafe_allow_html=True)
+            st.caption("Final Output")
             
         # 3. Model Inference Comparison (3 Columns cards)
-        st.markdown('<div class="section-header">2. Multi-Model Inference Comparison</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header" style="margin-top: 0px; padding-top: 0px;">2. Multi-Model Inference Comparison</div>', unsafe_allow_html=True)
         
         m_col1, m_col2, m_col3 = st.columns(3)
         
@@ -660,14 +656,14 @@ else:
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px;">
                         <div>
-                            <div style="font-size: 0.75rem; color:#9ca3af; text-transform:uppercase; font-weight:600;">Confidence</div>
-                            <div style="font-size: 1.4rem; font-weight:800; color:#ffffff; margin-top:4px;">{cnn_confidence:.2%}</div>
+                            <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Confidence</div>
+                            <div style="font-size: 1.4rem; font-weight:800; color:#0f172a; margin-top:4px;">{cnn_confidence:.2%}</div>
                         </div>
                     </div>
                 </div>
-                <div style="margin-top: auto; padding-top: 15px; font-size: 0.75rem; color:#9ca3af; border-top:1px solid #1f2937; display: flex; justify-content: space-between;">
+                <div style="margin-top: auto; padding-top: 15px; font-size: 0.75rem; color:#64748b; border-top:1px solid #f1f5f9; display: flex; justify-content: space-between;">
                     <span>Latency:</span>
-                    <b style="color:#ffffff;">{cnn_time:.2f} ms</b>
+                    <b style="color:#334155;">{cnn_time:.2f} ms</b>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -684,14 +680,14 @@ else:
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px;">
                         <div>
-                            <div style="font-size: 0.75rem; color:#9ca3af; text-transform:uppercase; font-weight:600;">Decision Score</div>
-                            <div style="font-size: 1.4rem; font-weight:800; color:#ffffff; margin-top:4px;">{svm_decision:.3f}</div>
+                            <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Decision Score</div>
+                            <div style="font-size: 1.4rem; font-weight:800; color:#0f172a; margin-top:4px;">{svm_decision:.3f}</div>
                         </div>
                     </div>
                 </div>
-                <div style="margin-top: auto; padding-top: 15px; font-size: 0.75rem; color:#9ca3af; border-top:1px solid #1f2937; display: flex; justify-content: space-between;">
+                <div style="margin-top: auto; padding-top: 15px; font-size: 0.75rem; color:#64748b; border-top:1px solid #f1f5f9; display: flex; justify-content: space-between;">
                     <span>Latency:</span>
-                    <b style="color:#ffffff;">{svm_time:.2f} ms</b>
+                    <b style="color:#334155;">{svm_time:.2f} ms</b>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -708,14 +704,14 @@ else:
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px;">
                         <div>
-                            <div style="font-size: 0.75rem; color:#9ca3af; text-transform:uppercase; font-weight:600;">Confidence</div>
-                            <div style="font-size: 1.4rem; font-weight:800; color:#ffffff; margin-top:4px;">{rf_confidence:.2%}</div>
+                            <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Confidence</div>
+                            <div style="font-size: 1.4rem; font-weight:800; color:#0f172a; margin-top:4px;">{rf_confidence:.2%}</div>
                         </div>
                     </div>
                 </div>
-                <div style="margin-top: auto; padding-top: 15px; font-size: 0.75rem; color:#9ca3af; border-top:1px solid #1f2937; display: flex; justify-content: space-between;">
+                <div style="margin-top: auto; padding-top: 15px; font-size: 0.75rem; color:#64748b; border-top:1px solid #f1f5f9; display: flex; justify-content: space-between;">
                     <span>Latency:</span>
-                    <b style="color:#ffffff;">{rf_time:.2f} ms</b>
+                    <b style="color:#334155;">{rf_time:.2f} ms</b>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -740,14 +736,14 @@ else:
                     g_col1, g_col2 = st.columns(2)
                     with g_col1:
                         st.markdown('<div class="saas-card" style="text-align: center;">', unsafe_allow_html=True)
-                        st.markdown("<h5 style='color: #ffffff; font-weight: 700; margin-top: 0; margin-bottom: 15px;'>Segmented Input (MobileNetV2 Input)</h5>", unsafe_allow_html=True)
+                        st.markdown("<h5>Segmented Input (MobileNetV2 Input)</h5>", unsafe_allow_html=True)
                         st.image(img_segmented_rgb, use_container_width=True)
                         st.markdown('</div>', unsafe_allow_html=True)
                     with g_col2:
                         st.markdown('<div class="saas-card" style="text-align: center;">', unsafe_allow_html=True)
-                        st.markdown("<h5 style='color: #ffffff; font-weight: 700; margin-top: 0; margin-bottom: 15px;'>Grad-CAM Attention Heatmap</h5>", unsafe_allow_html=True)
+                        st.markdown("<h5>Grad-CAM Attention Heatmap</h5>", unsafe_allow_html=True)
                         st.image(overlay_rgb, use_container_width=True)
-                        st.markdown('<p style="font-size: 0.8rem; color: #9ca3af; margin-top: 8px;">Peta panas berwarna merah/jingga menunjukkan fitur citra yang menjadi fokus utama neural network dalam membedakan kualitas segar vs busuk.</p>', unsafe_allow_html=True)
+                        st.caption("Peta panas berwarna merah/jingga menunjukkan fitur citra yang menjadi fokus utama neural network dalam membedakan kualitas segar vs busuk.")
                         st.markdown('</div>', unsafe_allow_html=True)
                 except Exception as e:
                     st.warning(f"Grad-CAM could not be generated: {e}")
