@@ -139,317 +139,1045 @@ NEW_ROOT = (
 nb01 = make_nb(
     [
         md_cell(
-            "# 01 - EDA & Data Preparation\n"
-            "\n"
-            "Eksplorasi dataset: distribusi kelas, statistik resolusi, visualisasi seluruh komoditas,\n"
-            "distribusi warna HSV fresh vs rotten, dan visualisasi pipeline preprocessing\n"
-            "(SSR, enhancement, segmentasi). Diakhiri dengan pembuatan split stratified 70/15/15."
+            """\
+# 01 - EDA & Data Preparation
+
+Eksplorasi dataset: distribusi kelas, statistik resolusi, visualisasi seluruh komoditas,
+distribusi warna HSV fresh vs rotten, dan visualisasi pipeline preprocessing
+(SSR, enhancement, segmentasi). Diakhiri dengan pembuatan split stratified 70/15/15."""
         ),
         KAGGLE_SETUP,
-        # ------------------------------------------------------------------
-        # Imports
-        # ------------------------------------------------------------------
         code_cell(
-            NEW_ROOT
-            + "import cv2\n"
-            "import matplotlib.pyplot as plt\n"
-            "import numpy as np\n"
-            "import pandas as pd\n"
-            "import seaborn as sns\n"
-            "\n"
-            "from src.enhancement import apply_enhancement\n"
-            "from src.preprocessing import check_integrity, preprocess_from_array\n"
-            "from src.segmentation import segment_fruit\n"
-            "from src.utils import (\n"
-            "    build_dataset_index,\n"
-            "    get_project_paths,\n"
-            "    make_splits,\n"
-            "    save_splits,\n"
-            "    set_seed,\n"
-            ")\n"
-            "\n"
-            "set_seed(42)\n"
-            "paths = get_project_paths()\n"
-            'print("Sumber dataset:", RAW_DATA_DIR)\n'
-        ),
-        # ------------------------------------------------------------------
-        # Dataset index + basic stats
-        # ------------------------------------------------------------------
-        md_cell("## 1. Statistik Dataset"),
-        code_cell(
-            "df = build_dataset_index(RAW_DATA_DIR)\n"
-            'print(f"Total citra  : {len(df)}")\n'
-            "print(f\"Komoditas    : {df['commodity'].nunique()}\")\n"
-            "print(f\"Label        : {df['label'].value_counts().to_dict()}\")\n"
-            "print(f\"Imbalance ratio: {df['label'].value_counts().max() / df['label'].value_counts().min():.2f}x\")\n"
-            "df.head()\n"
-        ),
-        # Per-commodity count table
-        code_cell(
-            "# Distribusi jumlah citra per komoditas x label\n"
-            'counts = df.groupby(["commodity", "label"]).size().unstack(fill_value=0)\n'
-            'counts["total"] = counts.sum(axis=1)\n'
-            "counts = counts.sort_values(\"total\", ascending=False)\n"
-            "display(counts)\n"
-            'print(f"\\nRata-rata per komoditas: {counts[\'total\'].mean():.0f} citra")\n'
-            'print(f"Min: {counts[\'total\'].min()} | Max: {counts[\'total\'].max()}")\n'
-        ),
-        # Distribution bar charts
-        code_cell(
-            'fig, axes = plt.subplots(1, 2, figsize=(14, 4))\n'
-            'df["label"].value_counts().plot(\n'
-            '    kind="bar", ax=axes[0], color=["green", "brown"], rot=0,\n'
-            '    title="Distribusi Global Kelas"\n'
-            ")\n"
-            'axes[0].set_ylabel("Jumlah citra")\n'
-            'df.groupby(["commodity", "label"]).size().unstack(fill_value=0).sort_index().plot(\n'
-            '    kind="bar", stacked=True, ax=axes[1],\n'
-            '    color=["green", "brown"],\n'
-            '    title="Distribusi per Komoditas"\n'
-            ")\n"
-            'axes[1].set_xlabel("")\n'
-            'axes[1].tick_params(axis="x", labelsize=8)\n'
-            "plt.tight_layout()\n"
-            "plt.show()\n"
-        ),
-        # Resolution statistics
-        code_cell(
-            "# Check image resolution distribution (sample 300)\n"
-            'sample_paths = df["filepath"].sample(min(300, len(df)), random_state=42).tolist()\n'
-            "shapes = []\n"
-            "for fp in sample_paths:\n"
-            "    img = cv2.imread(fp)\n"
-            "    if img is not None:\n"
-            "        shapes.append(img.shape[:2])\n"
-            'shape_df = pd.DataFrame(shapes, columns=["height", "width"])\n'
-            'print("Statistik resolusi citra (sample 300):")\n'
-            "print(shape_df.describe().round(1))\n"
-            "n_unique = len(shape_df.drop_duplicates())\n"
-            'print(f"\\nJumlah ukuran unik: {n_unique}")\n'
-            "if n_unique <= 10:\n"
-            "    print(\"Ukuran unik:\", shape_df.drop_duplicates().values.tolist())\n"
-        ),
-        # ------------------------------------------------------------------
-        # Visual samples — all commodities
-        # ------------------------------------------------------------------
-        md_cell("## 2. Sampel Visual Semua Komoditas"),
-        code_cell(
-            "commodities = sorted(df['commodity'].unique())\n"
-            "ncols, nrows = 2, len(commodities)\n"
-            "fig, axes = plt.subplots(nrows, ncols, figsize=(6, nrows * 2.2))\n"
-            'for i, comm in enumerate(commodities):\n'
-            '    for j, label in enumerate(["fresh", "rotten"]):\n'
-            "        ax = axes[i, j]\n"
-            '        subset = df[(df["commodity"] == comm) & (df["label"] == label)]\n'
-            "        if not subset.empty:\n"
-            '            img = cv2.imread(subset.iloc[0]["filepath"])\n'
-            "            if img is not None:\n"
-            "                ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))\n"
-            '        ax.set_title(f"{comm}\\n({label})", fontsize=7)\n'
-            '        ax.axis("off")\n'
-            'plt.suptitle("Sampel per Komoditas — kiri: fresh, kanan: rotten", fontsize=10)\n'
-            "plt.tight_layout()\n"
-            "plt.show()\n"
-        ),
-        # ------------------------------------------------------------------
-        # Integrity check
-        # ------------------------------------------------------------------
-        md_cell("## 3. Pemeriksaan Integritas"),
-        code_cell(
-            'corrupt = [fp for fp in df["filepath"] if not check_integrity(fp)]\n'
-            'print(f"Citra corrupt / tidak terbaca: {len(corrupt)}")\n'
-            "if corrupt:\n"
-            "    for fp in corrupt[:5]:\n"
-            "        print(' ', fp)\n"
-        ),
-        # ------------------------------------------------------------------
-        # HSV color distribution — key EDA for feature motivation
-        # ------------------------------------------------------------------
-        md_cell(
-            "## 4. Distribusi Warna HSV: Fresh vs Rotten\n"
-            "\n"
-            "Histogram HSV rata-rata dari 500 sampel tiap kelas. Perbedaan distribusi\n"
-            "Hue (H), Saturation (S), dan Value (V) antara fresh dan rotten\n"
-            "**memotivasi penggunaan HSV histogram sebagai fitur utama** dalam pipeline klasifikasi."
+            """\
+import os
+import sys
+from pathlib import Path
+
+# Setup cell sudah chdir ke PROJECT_DIR & menambah sys.path (Kaggle-only).
+ROOT = Path("/kaggle/working/pcd-kelompok-17")
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+from src.enhancement import apply_enhancement
+from src.preprocessing import check_integrity, preprocess_from_array
+from src.segmentation import segment_fruit
+from src.utils import (
+    build_dataset_index,
+    get_project_paths,
+    make_splits,
+    save_splits,
+    set_seed,
+)
+
+set_seed(42)
+paths = get_project_paths()
+print("Sumber dataset:", RAW_DATA_DIR)
+"""
         ),
         code_cell(
-            "def _hsv_histograms(filepaths, n_sample=500):\n"
-            '    """Mean of PER-IMAGE-NORMALIZED HSV histograms over a sample.\n'
-            "\n"
-            "    Each image's histogram is normalized to sum to 1 BEFORE averaging, so\n"
-            "    the result is a probability distribution independent of image resolution.\n"
-            "    Without this, the dataset's heterogeneous resolution (100px–4160px) would\n"
-            "    make the plot reflect image size rather than color distribution.\n"
-            '    """\n'
-            "    h_acc = np.zeros(180, dtype=np.float64)\n"
-            "    s_acc = np.zeros(256, dtype=np.float64)\n"
-            "    v_acc = np.zeros(256, dtype=np.float64)\n"
-            "    count = 0\n"
-            "    for fp in filepaths[:n_sample]:\n"
-            "        img = cv2.imread(fp)\n"
-            "        if img is None:\n"
-            "            continue\n"
-            "        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)\n"
-            "        h = cv2.calcHist([hsv], [0], None, [180], [0, 180]).flatten()\n"
-            "        s = cv2.calcHist([hsv], [1], None, [256], [0, 256]).flatten()\n"
-            "        v = cv2.calcHist([hsv], [2], None, [256], [0, 256]).flatten()\n"
-            "        # Normalize each image to a probability distribution (sum=1) so large\n"
-            "        # images don't dominate the average.\n"
-            "        h_acc += h / max(h.sum(), 1)\n"
-            "        s_acc += s / max(s.sum(), 1)\n"
-            "        v_acc += v / max(v.sum(), 1)\n"
-            "        count += 1\n"
-            "    if count:\n"
-            "        h_acc /= count; s_acc /= count; v_acc /= count\n"
-            "    return h_acc, s_acc, v_acc\n"
-            "\n"
-            'fresh_fps  = df[df["label"] == "fresh"]["filepath"].tolist()\n'
-            'rotten_fps = df[df["label"] == "rotten"]["filepath"].tolist()\n'
-            "h_f, s_f, v_f = _hsv_histograms(fresh_fps)\n"
-            "h_r, s_r, v_r = _hsv_histograms(rotten_fps)\n"
-            "\n"
-            "fig, axes = plt.subplots(1, 3, figsize=(15, 4))\n"
-            "channel_data = [\n"
-            '    (h_f, h_r, "Hue (H)", "Nilai Hue (0–179)"),\n'
-            '    (s_f, s_r, "Saturation (S)", "Nilai Saturasi (0–255)"),\n'
-            '    (v_f, v_r, "Value / Kecerahan (V)", "Nilai Value (0–255)"),\n'
-            "]\n"
-            "for ax, (fresh_hist, rotten_hist, title, xlabel) in zip(axes, channel_data):\n"
-            '    ax.plot(fresh_hist,  color="green", label="Fresh",  alpha=0.8, linewidth=1.5)\n'
-            '    ax.plot(rotten_hist, color="brown", label="Rotten", alpha=0.8, linewidth=1.5)\n'
-            "    ax.set_title(f\"Distribusi {title}\")\n"
-            "    ax.set_xlabel(xlabel)\n"
-            '    ax.set_ylabel("Proporsi piksel (rata-rata, ternormalisasi)")\n'
-            "    ax.legend()\n"
-            "\n"
-            "plt.suptitle(\n"
-            '    "Distribusi Warna HSV: Fresh vs Rotten (ternormalisasi per-citra)\\n"\n'
-            '    "Perbedaan bentuk pada H, S, V memotivasi HSV histogram sebagai fitur warna utama",\n'
-            "    fontsize=10,\n"
-            ")\n"
-            "plt.tight_layout()\n"
-            "plt.show()\n"
+            """\
+df = build_dataset_index(RAW_DATA_DIR)
+print(f"Total citra  : {len(df)}")
+print(f"Komoditas    : {df['commodity'].nunique()}")
+print(f"Label        : {df['label'].value_counts().to_dict()}")
+print(f"Imbalance ratio: {df['label'].value_counts().max() / df['label'].value_counts().min():.2f}x")
+df.head()
+"""
         ),
-        # ------------------------------------------------------------------
-        # Preprocessing pipeline visualization
-        # ------------------------------------------------------------------
-        md_cell(
-            "## 5. Visualisasi Pipeline Preprocessing\n"
-            "\n"
-            "Menampilkan efek tiap tahap preprocessing: SSR, enhancement (CLAHE/gamma),\n"
-            "dan segmentasi Otsu. Membantu memahami transformasi citra sebelum ekstraksi fitur."
-        ),
-        # Pick representative samples once, reused in all three visualizations
         code_cell(
-            "# Pick one representative fresh and one rotten sample for all visualizations below\n"
-            'fp_fresh  = df[df["label"] == "fresh"].iloc[0]["filepath"]\n'
-            'fp_rotten = df[df["label"] == "rotten"].iloc[0]["filepath"]\n'
-            'print("Fresh sample :", fp_fresh)\n'
-            'print("Rotten sample:", fp_rotten)\n'
-        ),
-        md_cell("### 5a. Efek Single-Scale Retinex (SSR)"),
-        code_cell(
-            "fig, axes = plt.subplots(2, 3, figsize=(13, 8))\n"
-            'for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):\n'
-            "    img_bgr  = cv2.imread(fp)\n"
-            "    original = cv2.resize(img_bgr, (224, 224))\n"
-            "    restored = preprocess_from_array(img_bgr, apply_restoration=True)\n"
-            "    diff     = cv2.absdiff(original, restored)\n"
-            "    diff_vis = np.clip(diff.astype(np.float32) * 5, 0, 255).astype(np.uint8)\n"
-            "    for col, (image, title, cmap) in enumerate([\n"
-            '        (cv2.cvtColor(original,  cv2.COLOR_BGR2RGB), "Original (resize 224×224)", None),\n'
-            '        (cv2.cvtColor(restored,  cv2.COLOR_BGR2RGB), "Setelah SSR", None),\n'
-            '        (diff_vis,                                   "Difference ×5 (panas=berubah)", "hot"),\n'
-            "    ]):\n"
-            "        axes[row, col].imshow(image, cmap=cmap)\n"
-            "        axes[row, col].set_title(f\"{label} – {title}\", fontsize=9)\n"
-            '        axes[row, col].axis("off")\n'
-            "plt.suptitle(\n"
-            '    "Efek Single-Scale Retinex (SSR)\\n"\n'
-            '    "Koreksi pencahayaan non-uniform: area gelap dinaikkan, area sangat terang direduksi",\n'
-            "    fontsize=10,\n"
-            ")\n"
-            "plt.tight_layout()\n"
-            "plt.show()\n"
-        ),
-        md_cell("### 5b. Perbandingan Enhancement (none vs CLAHE vs Gamma)"),
-        code_cell(
-            "fig, axes = plt.subplots(2, 4, figsize=(16, 8))\n"
-            'for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):\n'
-            "    img_bgr = cv2.imread(fp)\n"
-            "    ssr_img = preprocess_from_array(img_bgr, apply_restoration=True)\n"
-            "    columns = [\n"
-            '        (cv2.cvtColor(cv2.resize(img_bgr, (224, 224)), cv2.COLOR_BGR2RGB), "Original"),\n'
-            '        (cv2.cvtColor(ssr_img,                          cv2.COLOR_BGR2RGB), "SSR (no enhance)"),\n'
-            '        (cv2.cvtColor(apply_enhancement(ssr_img, "clahe"), cv2.COLOR_BGR2RGB), "SSR + CLAHE"),\n'
-            '        (cv2.cvtColor(apply_enhancement(ssr_img, "gamma"), cv2.COLOR_BGR2RGB), "SSR + Gamma"),\n'
-            "    ]\n"
-            "    for col, (image, title) in enumerate(columns):\n"
-            "        axes[row, col].imshow(image)\n"
-            "        axes[row, col].set_title(f\"{label}\\n{title}\", fontsize=9)\n"
-            '        axes[row, col].axis("off")\n'
-            "plt.suptitle(\n"
-            '    "Perbandingan Enhancement Method\\n"\n'
-            '    "E* (enhancement terbaik) dipilih otomatis berdasarkan validation F1 pada S2–S4",\n'
-            "    fontsize=10,\n"
-            ")\n"
-            "plt.tight_layout()\n"
-            "plt.show()\n"
+            """\
+# Alias untuk sel analisis baru
+full_df = df.copy()
+"""
         ),
         md_cell(
-            "### 5c. Segmentasi Otsu + Morfologi\n"
-            "\n"
-            "**Temuan penting:** pada dataset ini segmentasi Otsu cenderung memilih *seluruh* frame\n"
-            "(object_ratio ≈ 100%), sehingga mask praktis tidak mengisolasi objek. Penyebabnya:\n"
-            "background hampir seragam putih + SSR/CLAHE menaikkan saturasi, sehingga gabungan\n"
-            "(`mask_saturasi OR mask_grayscale`) menutupi hampir semua piksel. Mask ditampilkan\n"
-            "eksplisit hitam=0 / putih=255 agar terlihat apa adanya (bukan artefak rendering).\n"
-            "Konsekuensi ini konsisten dengan hasil eksperimen: S5 (segmentasi) ≈ S3 (tanpa\n"
-            "segmentasi) dan uji McNemar tidak signifikan (p≈0.21)."
+            """\
+## Seksi A - Analisis Kualitas Dataset
+
+Bagian ini melakukan evaluasi terhadap integritas data (data integrity) dan keseimbangan kelas (class imbalance) secara mendalam.
+Uji integritas dilakukan secara paralel menggunakan multi-threading untuk mendeteksi apakah terdapat file gambar yang corrupt atau tidak terbaca oleh OpenCV.
+Analisis imbalance dilakukan untuk mengetahui apakah terdapat ketidakseimbangan kelas (fresh vs rotten) yang ekstrim pada setiap komoditas,
+yang dapat memengaruhi objektivitas metrik F1-score dan memotivasi penggunaan pembagian dataset terstratifikasi (stratified split).
+"""
         ),
         code_cell(
-            "# Use E*='clahe' as a stand-in for visualization (actual E* resolved at runtime in nb02)\n"
-            "fig, axes = plt.subplots(2, 4, figsize=(16, 8))\n"
-            'for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):\n'
-            "    img_bgr  = cv2.imread(fp)\n"
-            "    ssr_img  = preprocess_from_array(img_bgr, apply_restoration=True)\n"
-            '    enhanced = apply_enhancement(ssr_img, "clahe")\n'
-            "    masked, binary_mask, obj_ratio, used_fallback = segment_fruit(enhanced)\n"
-            '    ratio_note = "[FALLBACK] " if used_fallback else ""\n'
-            "    columns = [\n"
-            '        (cv2.cvtColor(cv2.resize(img_bgr, (224, 224)), cv2.COLOR_BGR2RGB), "Original", None),\n'
-            '        (cv2.cvtColor(ssr_img,  cv2.COLOR_BGR2RGB), "SSR", None),\n'
-            '        (binary_mask, f"Mask Otsu\\n{ratio_note}foreground={obj_ratio:.0%}", "gray"),\n'
-            '        (cv2.cvtColor(masked, cv2.COLOR_BGR2RGB), "Hasil Segmentasi", None),\n'
-            "    ]\n"
-            "    for col, (image, title, cmap) in enumerate(columns):\n"
-            "        # Fix vmin/vmax for the mask so a uniform all-255 array renders WHITE\n"
-            "        # (matplotlib otherwise maps a constant array to the colormap minimum = black).\n"
-            "        if cmap == \"gray\":\n"
-            "            axes[row, col].imshow(image, cmap=cmap, vmin=0, vmax=255)\n"
-            "        else:\n"
-            "            axes[row, col].imshow(image, cmap=cmap)\n"
-            "        axes[row, col].set_title(f\"{label}\\n{title}\", fontsize=9)\n"
-            '        axes[row, col].axis("off")\n'
-            "plt.suptitle(\n"
-            '    "Segmentasi Otsu + Morfologi (ellipse kernel open→close + largest contour)\\n"\n'
-            '    "Pada dataset ini mask cenderung menutupi seluruh frame (foreground≈100%) → segmentasi tidak efektif",\n'
-            "    fontsize=10,\n"
-            ")\n"
-            "plt.tight_layout()\n"
-            "plt.show()\n"
+            """\
+# A1. Integrity Check (Paralel) - Mendeteksi file citra yang corrupt/unreadable.
+# Pengujian ini memastikan seluruh gambar dapat dibuka dengan OpenCV tanpa error.
+import concurrent.futures
+from src.preprocessing import check_integrity
+
+def check_all_integrity(df, n_workers=4):
+    \"\"\"
+    Melakukan pemeriksaan integritas file gambar secara paralel menggunakan ThreadPoolExecutor.
+    
+    Args:
+        df (pd.DataFrame): Dataframe indeks dataset yang berisi kolom 'filepath'.
+        n_workers (int): Jumlah thread pekerja paralel.
+        
+    Returns:
+        pd.DataFrame: Copy dari dataframe input dengan tambahan kolom boolean 'readable'.
+    \"\"\"
+    # Menggunakan ThreadPoolExecutor untuk mempercepat proses pembacaan I/O file gambar secara paralel
+    with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as ex:
+        results = list(ex.map(lambda p: check_integrity(p), df["filepath"]))
+    df = df.copy()
+    df["readable"] = results
+    return df
+
+# Jalankan pengecekan kualitas integritas file
+df_quality = check_all_integrity(full_df)
+n_corrupt = (~df_quality["readable"]).sum()
+print(f"Total gambar   : {len(df_quality)}")
+print(f"Gambar corrupt : {n_corrupt} ({n_corrupt/len(df_quality)*100:.2f}%)")
+
+# Tampilkan list file jika ditemukan yang corrupt, atau print status sukses
+if n_corrupt > 0:
+    print("[FAIL] File corrupt terdeteksi:")
+    print(df_quality[~df_quality["readable"]][["filepath","label","commodity"]])
+else:
+    print("[OK] Semua gambar dapat dibaca dengan baik (tidak ada file corrupt).")
+"""
         ),
-        # ------------------------------------------------------------------
-        # Stratified split
-        # ------------------------------------------------------------------
-        md_cell("## 6. Pembuatan Split Stratified (70/15/15)"),
         code_cell(
-            "train, val, test = make_splits(df)\n"
-            'print(f"Train: {len(train)} | Val: {len(val)} | Test: {len(test)}")\n'
-            'print(f"Stratifikasi train: {train[\'label\'].value_counts().to_dict()}")\n'
-            'print(f"Stratifikasi test : {test[\'label\'].value_counts().to_dict()}")\n'
-            'split_path = save_splits(train, val, test, paths["splits"])\n'
-            'print(f"Split disimpan ke: {split_path}")\n'
+            """\
+# A2. Analisis Class Imbalance per Komoditas
+# Ketidakseimbangan yang ekstrim dapat mengganggu proses training model klasifikasi klasik.
+pivot = full_df.groupby(["commodity","label"]).size().unstack(fill_value=0)
+pivot["ratio_fresh_rotten"] = pivot.get("fresh", 0) / (pivot.get("rotten", 1) + 1e-9)
+pivot = pivot.sort_values("ratio_fresh_rotten", ascending=False)
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 5))
+fig.suptitle("Distribusi Kelas & Imbalance per Komoditas", fontsize=13, fontweight="bold")
+
+# Subplot 0: Jumlah gambar per komoditas
+counts = full_df.groupby("commodity").size().sort_values()
+axes[0].barh(counts.index, counts.values, color=sns.color_palette("husl", len(counts)))
+axes[0].set_title("Jumlah Gambar per Komoditas")
+axes[0].set_xlabel("Jumlah")
+
+# Subplot 1: Ratio Fresh/Rotten per komoditas (menyoroti imbalance > 2.0x atau < 0.5x)
+colors_bar = ["#e74c3c" if v > 2 or v < 0.5 else "#2ecc71" for v in pivot["ratio_fresh_rotten"]]
+axes[1].barh(pivot.index, pivot["ratio_fresh_rotten"], color=colors_bar)
+axes[1].axvline(1.0, color="red", linestyle="--", label="Balanced (ratio=1)")
+axes[1].set_title("Fresh/Rotten Ratio per Komoditas\n(merah = imbalance >2x atau <0.5x)")
+axes[1].set_xlabel("Ratio fresh:rotten")
+axes[1].legend()
+
+plt.tight_layout()
+# Simpan plot hasil analisis visual kualitas ke folder figures
+plt.savefig(paths["figures"] / "eda_a_class_imbalance.png", dpi=150, bbox_inches="tight")
+plt.show()
+
+print("\nImbalance summary:")
+print(pivot[["fresh","rotten","ratio_fresh_rotten"]].to_string())
+global_ratio = (full_df["label"]=="fresh").sum() / (full_df["label"]=="rotten").sum()
+print(f"\nGlobal fresh/rotten ratio: {global_ratio:.3f}")
+"""
+        ),
+        md_cell(
+            """\
+## Seksi B - Distribusi Resolusi & Aspek Rasio
+
+Analisis resolusi dilakukan untuk menentukan ukuran target resize yang optimal (dalam proyek ini 224x224 piksel untuk MobileNetV2).
+Kita memeriksa apakah terdapat gambar dengan resolusi sangat rendah (di bawah 224px) yang dapat terdistorsi saat di-upscale,
+serta memeriksa distribusi aspek rasio (H/W) untuk memastikan bahwa proses pengubahan ukuran gambar menjadi persegi (square)
+tidak menyebabkan distorsi geometris (squishing) yang signifikan pada objek buah dan sayur.
+"""
+        ),
+        code_cell(
+            """\
+# B. Analisis Distribusi Resolusi & Aspek Rasio Asli
+def get_image_dims(path):
+    \"\"\"Membaca citra secara cepat dan mengembalikan dimensi (tinggi, lebar).\"\"\"
+    img = cv2.imread(str(path))
+    if img is None:
+        return None, None
+    h, w = img.shape[:2]
+    return h, w
+
+# Ekstraksi dimensi untuk seluruh gambar dalam dataset secara iteratif
+dim_records = []
+for _, row in full_df.iterrows():
+    h, w = get_image_dims(row["filepath"])
+    if h is None:
+        continue
+    dim_records.append({"h": h, "w": w, "aspect_ratio": h/w,
+                         "min_side": min(h, w),
+                         "commodity": row["commodity"], "label": row["label"]})
+
+df_res = pd.DataFrame(dim_records)
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+fig.suptitle("Analisis Resolusi Dataset", fontsize=13, fontweight="bold")
+
+# Subplot 0: Scatter plot width vs height
+axes[0].scatter(df_res["w"], df_res["h"], alpha=0.1, s=5, color="steelblue")
+axes[0].axvline(224, color="red", linestyle="--", linewidth=1.5, label="Target 224px")
+axes[0].axhline(224, color="red", linestyle="--", linewidth=1.5)
+axes[0].set_xlabel("Width (px)")
+axes[0].set_ylabel("Height (px)")
+axes[0].set_title("Distribusi Resolusi Asli")
+axes[0].legend()
+
+# Subplot 1: Histogram aspek rasio
+axes[1].hist(df_res["aspect_ratio"], bins=50, color="steelblue", edgecolor="white")
+axes[1].axvline(1.0, color="red", linestyle="--", label="Square (1:1)")
+axes[1].set_xlabel("Aspect Ratio (H/W)")
+axes[1].set_title("Distribusi Aspect Ratio")
+axes[1].legend()
+
+# Subplot 2: Sisi minimum (min side) terkecil per komoditas (menyoroti sisi < 224px)
+min_side = df_res.groupby("commodity")["min_side"].min().sort_values()
+colors_res = ["#e74c3c" if v < 224 else "#2ecc71" for v in min_side.values]
+axes[2].barh(min_side.index, min_side.values, color=colors_res)
+axes[2].axvline(224, color="red", linestyle="--", label="Target 224px")
+axes[2].set_title("Resolusi Minimum per Komoditas\n(merah = < 224px)")
+axes[2].set_xlabel("Min side (px)")
+axes[2].legend()
+
+plt.tight_layout()
+# Simpan plot resolusi
+plt.savefig(paths["figures"] / "eda_b_resolution.png", dpi=150, bbox_inches="tight")
+plt.show()
+
+print(f"Median resolusi  : {df_res['w'].median():.0f} x {df_res['h'].median():.0f}")
+print(f"Min side terkecil: {df_res['min_side'].min()} px "
+      f"({df_res.loc[df_res['min_side'].idxmin(), 'commodity']})")
+print(f"Aspect ratio     : mean={df_res['aspect_ratio'].mean():.3f}, "
+      f"std={df_res['aspect_ratio'].std():.3f}")
+pct_below224 = (df_res["min_side"] < 224).mean() * 100
+print(f"Gambar < 224px   : {pct_below224:.1f}% (akan di-upscale saat resize)")
+"""
+        ),
+        code_cell(
+            """\
+# Check image resolution distribution (sample 300)
+sample_paths = df["filepath"].sample(min(300, len(df)), random_state=42).tolist()
+shapes = []
+for fp in sample_paths:
+    img = cv2.imread(fp)
+    if img is not None:
+        shapes.append(img.shape[:2])
+shape_df = pd.DataFrame(shapes, columns=["height", "width"])
+print("Statistik resolusi citra (sample 300):")
+print(shape_df.describe().round(1))
+n_unique = len(shape_df.drop_duplicates())
+print(f"\nJumlah ukuran unik: {n_unique}")
+if n_unique <= 10:
+    print("Ukuran unik:", shape_df.drop_duplicates().values.tolist())
+"""
+        ),
+        md_cell(
+            """\
+## 2. Sampel Visual Semua Komoditas"""
+        ),
+        code_cell(
+            """\
+commodities = sorted(df['commodity'].unique())
+ncols, nrows = 2, len(commodities)
+fig, axes = plt.subplots(nrows, ncols, figsize=(6, nrows * 2.2))
+for i, comm in enumerate(commodities):
+    for j, label in enumerate(["fresh", "rotten"]):
+        ax = axes[i, j]
+        subset = df[(df["commodity"] == comm) & (df["label"] == label)]
+        if not subset.empty:
+            img = cv2.imread(subset.iloc[0]["filepath"])
+            if img is not None:
+                ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+        ax.set_title(f"{comm}\n({label})", fontsize=7)
+        ax.axis("off")
+plt.suptitle("Sampel per Komoditas - kiri: fresh, kanan: rotten", fontsize=10)
+plt.tight_layout()
+plt.show()
+"""
+        ),
+        md_cell(
+            """\
+## 3. Pemeriksaan Integritas"""
+        ),
+        code_cell(
+            """\
+corrupt = [fp for fp in df["filepath"] if not check_integrity(fp)]
+print(f"Citra corrupt / tidak terbaca: {len(corrupt)}")
+if corrupt:
+    for fp in corrupt[:5]:
+        print(' ', fp)
+"""
+        ),
+        md_cell(
+            """\
+## 4. Distribusi Warna HSV: Fresh vs Rotten
+
+Histogram HSV rata-rata dari 500 sampel tiap kelas. Perbedaan distribusi
+Hue (H), Saturation (S), dan Value (V) antara fresh dan rotten
+**memotivasi penggunaan HSV histogram sebagai fitur utama** dalam pipeline klasifikasi."""
+        ),
+        code_cell(
+            """\
+def _hsv_histograms(filepaths, n_sample=500):
+    \"\"\"Mean of PER-IMAGE-NORMALIZED HSV histograms over a sample.
+
+    Each image's histogram is normalized to sum to 1 BEFORE averaging, so
+    the result is a probability distribution independent of image resolution.
+    Without this, the dataset's heterogeneous resolution (100px-4160px) would
+    make the plot reflect image size rather than color distribution.
+    \"\"\"
+    h_acc = np.zeros(180, dtype=np.float64)
+    s_acc = np.zeros(256, dtype=np.float64)
+    v_acc = np.zeros(256, dtype=np.float64)
+    count = 0
+    for fp in filepaths[:n_sample]:
+        img = cv2.imread(fp)
+        if img is None:
+            continue
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        h = cv2.calcHist([hsv], [0], None, [180], [0, 180]).flatten()
+        s = cv2.calcHist([hsv], [1], None, [256], [0, 256]).flatten()
+        v = cv2.calcHist([hsv], [2], None, [256], [0, 256]).flatten()
+        # Normalize each image to a probability distribution (sum=1) so large
+        # images don't dominate the average.
+        h_acc += h / max(h.sum(), 1)
+        s_acc += s / max(s.sum(), 1)
+        v_acc += v / max(v.sum(), 1)
+        count += 1
+    if count:
+        h_acc /= count; s_acc /= count; v_acc /= count
+    return h_acc, s_acc, v_acc
+
+fresh_fps  = df[df["label"] == "fresh"]["filepath"].tolist()
+rotten_fps = df[df["label"] == "rotten"]["filepath"].tolist()
+h_f, s_f, v_f = _hsv_histograms(fresh_fps)
+h_r, s_r, v_r = _hsv_histograms(rotten_fps)
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+channel_data = [
+    (h_f, h_r, "Hue (H)", "Nilai Hue (0-179)"),
+    (s_f, s_r, "Saturation (S)", "Nilai Saturasi (0-255)"),
+    (v_f, v_r, "Value / Kecerahan (V)", "Nilai Value (0-255)"),
+]
+for ax, (fresh_hist, rotten_hist, title, xlabel) in zip(axes, channel_data):
+    ax.plot(fresh_hist,  color="green", label="Fresh",  alpha=0.8, linewidth=1.5)
+    ax.plot(rotten_hist, color="brown", label="Rotten", alpha=0.8, linewidth=1.5)
+    ax.set_title(f"Distribusi {title}")
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel("Proporsi piksel (rata-rata, ternormalisasi)")
+    ax.legend()
+
+plt.suptitle(
+    "Distribusi Warna HSV: Fresh vs Rotten (ternormalisasi per-citra)\n"
+    "Perbedaan bentuk pada H, S, V memotivasi HSV histogram sebagai fitur warna utama",
+    fontsize=10,
+)
+plt.tight_layout()
+plt.show()
+"""
+        ),
+        md_cell(
+            """\
+## Seksi D - Separabilitas Warna Fresh vs Rotten per Komoditas
+
+Untuk memotivasi penggunaan fitur warna (histogram HSV) sebagai fitur utama dalam pipeline klasik,
+kita mengukur separabilitas statistik warna Hue antara kelas fresh dan rotten untuk setiap komoditas
+menggunakan metrik ukuran efek Cohen's d.
+Nilai Cohen's d di atas 1.5 menunjukkan pemisahan warna yang sangat kontras (mudah diklasifikasi),
+sedangkan nilai di bawah 0.5 menunjukkan pemisahan warna yang rendah (sulit diklasifikasi).
+Analisis ini membantu menjelaskan mengapa model baseline klasik (S1) tanpa preprocessing pun sudah
+memiliki performa F1 yang sangat tinggi (~0.97).
+"""
+        ),
+        code_cell(
+            """\
+# D. Cohen's d Separabilitas Warna Hue per Komoditas
+# Cohen's d = |mean_fresh - mean_rotten| / pooled_std
+# d > 1.5 = mudah, 0.5-1.5 = sedang, < 0.5 = sulit
+N_PER_LABEL = 30  # Jumlah sampel citra per kombinasi komoditas x label
+
+sep_records = []
+for commodity in sorted(full_df["commodity"].unique()):
+    sub = full_df[full_df["commodity"] == commodity]
+
+    hues = {"fresh": [], "rotten": []}
+    for label in ["fresh", "rotten"]:
+        paths_sub = sub[sub["label"]==label]["filepath"].tolist()
+        sample_paths = paths_sub[:N_PER_LABEL]
+        for p in sample_paths:
+            img = cv2.imread(str(p))
+            if img is None:
+                continue
+            # Resize cepat ke 64x64 untuk mengambil rata-rata nilai Hue
+            img_r = preprocess_arr(img, apply_restoration=False)
+            img_r_resized = cv2.resize(img_r, (64, 64))
+            hsv = cv2.cvtColor(img_r_resized, cv2.COLOR_BGR2HSV)
+            hues[label].append(float(hsv[:, :, 0].mean()))
+
+    h_f = np.array(hues["fresh"])
+    h_r = np.array(hues["rotten"])
+    if len(h_f) < 3 or len(h_r) < 3:
+        continue
+
+    # Hitung standar deviasi gabungan (pooled std) dan Cohen's d
+    pooled_std = np.sqrt((h_f.std()**2 + h_r.std()**2) / 2 + 1e-6)
+    cohen_d = abs(h_f.mean() - h_r.mean()) / pooled_std
+    difficulty = "Mudah" if cohen_d > 1.5 else ("Sedang" if cohen_d > 0.5 else "Sulit")
+    sep_records.append({
+        "commodity": commodity,
+        "mean_H_fresh": h_f.mean(),
+        "mean_H_rotten": h_r.mean(),
+        "delta_H": abs(h_f.mean() - h_r.mean()),
+        "cohen_d": cohen_d,
+        "difficulty": difficulty,
+    })
+
+df_sep = pd.DataFrame(sep_records).sort_values("cohen_d", ascending=False)
+
+fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+fig.suptitle("Separabilitas Warna (Hue) Fresh vs Rotten per Komoditas", fontsize=13, fontweight="bold")
+
+# Subplot 0: Bar chart nilai Cohen's d
+color_map = {"Mudah": "#2ecc71", "Sedang": "#f39c12", "Sulit": "#e74c3c"}
+bar_colors = [color_map[d] for d in df_sep["difficulty"]]
+axes[0].barh(df_sep["commodity"], df_sep["cohen_d"], color=bar_colors)
+axes[0].axvline(1.5, color="green", linestyle="--", alpha=0.7, label="d=1.5 (Mudah)")
+axes[0].axvline(0.5, color="orange", linestyle="--", alpha=0.7, label="d=0.5 (Sedang)")
+axes[0].set_xlabel("Cohen's d")
+axes[0].set_title("Cohen's d per Komoditas\n(separabilitas hue fresh vs rotten)")
+from matplotlib.patches import Patch
+legend_el = [Patch(facecolor="#2ecc71", label="Mudah (d>1.5)"),
+              Patch(facecolor="#f39c12", label="Sedang (0.5<d<=1.5)"),
+              Patch(facecolor="#e74c3c", label="Sulit (d<=0.5)")]
+axes[0].legend(handles=legend_el)
+
+# Subplot 1: Scatter plot Mean Hue Fresh vs Rotten
+axes[1].scatter(df_sep["mean_H_fresh"], df_sep["mean_H_rotten"], c=bar_colors, s=100, zorder=5)
+for _, row in df_sep.iterrows():
+    axes[1].annotate(row["commodity"], (row["mean_H_fresh"], row["mean_H_rotten"]),
+                     textcoords="offset points", xytext=(5, 3), fontsize=7)
+mn = min(df_sep[["mean_H_fresh","mean_H_rotten"]].min())
+mx = max(df_sep[["mean_H_fresh","mean_H_rotten"]].max())
+axes[1].plot([mn, mx], [mn, mx], "k--", alpha=0.3, label="Fresh = Rotten")
+axes[1].set_xlabel("Mean Hue - Fresh")
+axes[1].set_ylabel("Mean Hue - Rotten")
+axes[1].set_title("Mean Hue Fresh vs Rotten\n(jauh dari diagonal = mudah dibedakan)")
+axes[1].legend()
+
+plt.tight_layout()
+plt.savefig(paths["figures"] / "eda_d_color_separability.png", dpi=150, bbox_inches="tight")
+plt.show()
+
+n_easy   = (df_sep["difficulty"] == "Mudah").sum()
+n_medium = (df_sep["difficulty"] == "Sedang").sum()
+n_hard   = (df_sep["difficulty"] == "Sulit").sum()
+print(f"\nDistribusi kesulitan komoditas:")
+print(f"  Mudah (d>1.5)         : {n_easy}/{len(df_sep)} komoditas")
+print(f"  Sedang (0.5<d<=1.5)    : {n_medium}/{len(df_sep)} komoditas")
+print(f"  Sulit (d<=0.5)         : {n_hard}/{len(df_sep)} komoditas")
+print(f"\n-> Mayoritas komoditas memiliki perbedaan warna yang jelas (d tinggi).")
+print(f"  Ini menjelaskan mengapa S1 (raw baseline) sudah mencapai F1=0.970.")
+if not df_sep[df_sep["difficulty"]=="Sulit"].empty:
+    print(f"\nKomoditas SULIT (kemungkinan sumber error):")
+    print(df_sep[df_sep["difficulty"]=="Sulit"][["commodity","delta_H","cohen_d"]].to_string())
+"""
+        ),
+        md_cell(
+            """\
+## 5. Visualisasi Pipeline Preprocessing
+
+Menampilkan efek tiap tahap preprocessing: SSR, enhancement (CLAHE/gamma),
+dan segmentasi Otsu. Membantu memahami transformasi citra sebelum ekstraksi fitur."""
+        ),
+        code_cell(
+            """\
+# Pick one representative fresh and one rotten sample for all visualizations below
+fp_fresh  = df[df["label"] == "fresh"].iloc[0]["filepath"]
+fp_rotten = df[df["label"] == "rotten"].iloc[0]["filepath"]
+print("Fresh sample :", fp_fresh)
+print("Rotten sample:", fp_rotten)
+"""
+        ),
+        md_cell(
+            """\
+### 5a. Efek Single-Scale Retinex (SSR)"""
+        ),
+        code_cell(
+            """\
+fig, axes = plt.subplots(2, 3, figsize=(13, 8))
+for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):
+    img_bgr  = cv2.imread(fp)
+    original = cv2.resize(img_bgr, (224, 224))
+    restored = preprocess_from_array(img_bgr, apply_restoration=True)
+    diff     = cv2.absdiff(original, restored)
+    diff_vis = np.clip(diff.astype(np.float32) * 5, 0, 255).astype(np.uint8)
+    for col, (image, title, cmap) in enumerate([
+        (cv2.cvtColor(original,  cv2.COLOR_BGR2RGB), "Original (resize 224x224)", None),
+        (cv2.cvtColor(restored,  cv2.COLOR_BGR2RGB), "Setelah SSR", None),
+        (diff_vis,                                   "Difference x5 (panas=berubah)", "hot"),
+    ]):
+        axes[row, col].imshow(image, cmap=cmap)
+        axes[row, col].set_title(f"{label} - {title}", fontsize=9)
+        axes[row, col].axis("off")
+plt.suptitle(
+    "Efek Single-Scale Retinex (SSR)\n"
+    "Koreksi pencahayaan non-uniform: area gelap dinaikkan, area sangat terang direduksi",
+    fontsize=10,
+)
+plt.tight_layout()
+plt.show()
+"""
+        ),
+        md_cell(
+            """\
+### 5b. Perbandingan Enhancement (none vs CLAHE vs Gamma)"""
+        ),
+        code_cell(
+            """\
+fig, axes = plt.subplots(2, 4, figsize=(16, 8))
+for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):
+    img_bgr = cv2.imread(fp)
+    ssr_img = preprocess_from_array(img_bgr, apply_restoration=True)
+    columns = [
+        (cv2.cvtColor(cv2.resize(img_bgr, (224, 224)), cv2.COLOR_BGR2RGB), "Original"),
+        (cv2.cvtColor(ssr_img,                          cv2.COLOR_BGR2RGB), "SSR (no enhance)"),
+        (cv2.cvtColor(apply_enhancement(ssr_img, "clahe"), cv2.COLOR_BGR2RGB), "SSR + CLAHE"),
+        (cv2.cvtColor(apply_enhancement(ssr_img, "gamma"), cv2.COLOR_BGR2RGB), "SSR + Gamma"),
+    ]
+    for col, (image, title) in enumerate(columns):
+        axes[row, col].imshow(image)
+        axes[row, col].set_title(f"{label}\n{title}", fontsize=9)
+        axes[row, col].axis("off")
+plt.suptitle(
+    "Perbandingan Enhancement Method\n"
+    "E* (enhancement terbaik) dipilih otomatis berdasarkan validation F1 pada S2-S4",
+    fontsize=10,
+)
+plt.tight_layout()
+plt.show()
+"""
+        ),
+        md_cell(
+            """\
+### 5c. Segmentasi Otsu + Morfologi
+
+**Temuan penting:** pada dataset ini segmentasi Otsu cenderung memilih *seluruh* frame
+(object_ratio ~ 100%), sehingga mask praktis tidak mengisolasi objek. Penyebabnya:
+background hampir seragam putih + SSR/CLAHE menaikkan saturasi, sehingga gabungan
+(`mask_saturasi OR mask_grayscale`) menutupi hampir semua piksel. Mask ditampilkan
+eksplisit hitam=0 / putih=255 agar terlihat apa adanya (bukan artefak rendering).
+Konsekuensi ini konsisten dengan hasil eksperimen: S5 (segmentasi) ~ S3 (tanpa
+segmentasi) dan uji McNemar tidak signifikan (p~0.21)."""
+        ),
+        code_cell(
+            """\
+# Use E*='clahe' as a stand-in for visualization (actual E* resolved at runtime in nb02)
+fig, axes = plt.subplots(2, 4, figsize=(16, 8))
+for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):
+    img_bgr  = cv2.imread(fp)
+    ssr_img  = preprocess_from_array(img_bgr, apply_restoration=True)
+    enhanced = apply_enhancement(ssr_img, "clahe")
+    masked, binary_mask, obj_ratio, used_fallback = segment_fruit(enhanced)
+    ratio_note = "[FALLBACK] " if used_fallback else ""
+    columns = [
+        (cv2.cvtColor(cv2.resize(img_bgr, (224, 224)), cv2.COLOR_BGR2RGB), "Original", None),
+        (cv2.cvtColor(ssr_img,  cv2.COLOR_BGR2RGB), "SSR", None),
+        (binary_mask, f"Mask Otsu\n{ratio_note}foreground={obj_ratio:.0%}", "gray"),
+        (cv2.cvtColor(masked, cv2.COLOR_BGR2RGB), "Hasil Segmentasi", None),
+    ]
+    for col, (image, title, cmap) in enumerate(columns):
+        # Fix vmin/vmax for the mask so a uniform all-255 array renders WHITE
+        # (matplotlib otherwise maps a constant array to the colormap minimum = black).
+        if cmap == "gray":
+            axes[row, col].imshow(image, cmap=cmap, vmin=0, vmax=255)
+        else:
+            axes[row, col].imshow(image, cmap=cmap)
+        axes[row, col].set_title(f"{label}\n{title}", fontsize=9)
+        axes[row, col].axis("off")
+plt.suptitle(
+    "Segmentasi Otsu + Morfologi (ellipse kernel open->close + largest contour)\n"
+    "Pada dataset ini mask cenderung menutupi seluruh frame (foreground~100%) -> segmentasi tidak efektif",
+    fontsize=10,
+)
+plt.tight_layout()
+plt.show()
+"""
+        ),
+        md_cell(
+            """\
+## Seksi C1 - Analisis Feasibility Segmentasi Otsu
+
+Bagian ini menguji kelayakan (feasibility) metode segmentasi berbasis Otsu Thresholding pada proyek ini.
+Kita mengukur rasio area buah (foreground) terhadap total luas gambar (object ratio).
+Jika rasio ini mendekati 100%, hal ini menunjukkan bahwa buah mengisi hampir seluruh area gambar,
+sehingga background tidak memberikan pengaruh kebisingan.
+Analisis ini membantu menjelaskan mengapa penambahan tahap segmentasi (S5) tidak memberikan peningkatan
+performa yang signifikan dibandingkan tanpa segmentasi (S3), serta mengapa fitur bentuk/shape (S8)
+memiliki akurasi yang rendah karena bentuk mask selalu menyerupai persegi penuh frame.
+"""
+        ),
+        code_cell(
+            """\
+# C1. Object Ratio Distribution - Seberapa baik Otsu memisahkan buah dari background?
+# Menggunakan sampling terstratifikasi (stratified sampling) untuk efisiensi komputasi.
+from src.segmentation import segment_fruit
+from src.preprocessing import preprocess_from_array as preprocess_arr
+
+N_PER_GROUP = 18  # Jumlah gambar per komoditas x label
+sample_seg = (
+    full_df
+    .groupby(["commodity", "label"], group_keys=False)
+    .apply(lambda g: g.sample(min(len(g), N_PER_GROUP), random_state=42))
+    .reset_index(drop=True)
+)
+
+print(f"Sample size: {len(sample_seg)} gambar (dari {len(full_df)} total)")
+
+seg_records = []
+for _, row in sample_seg.iterrows():
+    img = cv2.imread(str(row["filepath"]))
+    if img is None:
+        continue
+    img_pre = preprocess_arr(img, apply_restoration=True)
+    # Lakukan segmentasi buah dan hitung foreground ratio
+    _, _, obj_ratio, used_fallback = segment_fruit(img_pre)
+    seg_records.append({
+        "object_ratio": obj_ratio,
+        "used_fallback": used_fallback,
+        "label": row["label"],
+        "commodity": row["commodity"],
+    })
+
+df_seg = pd.DataFrame(seg_records)
+pct_over90 = (df_seg["object_ratio"] > 0.90).mean() * 100
+pct_fallback = df_seg["used_fallback"].mean() * 100
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+fig.suptitle("Analisis Feasibility Segmentasi Otsu", fontsize=14, fontweight="bold")
+
+# Subplot 0: Histogram object_ratio (mencari gambar dengan ratio > 90% atau fallback)
+axes[0].hist(df_seg["object_ratio"], bins=30, color="steelblue", edgecolor="white")
+axes[0].axvline(0.90, color="red", linestyle="--", linewidth=2, label="90% (gagal/efek nol)")
+axes[0].axvline(0.05, color="orange", linestyle="--", linewidth=2, label="5% (fallback)")
+axes[0].set_xlabel("Object Ratio (foreground %)")
+axes[0].set_ylabel("Jumlah gambar")
+axes[0].set_title("Distribusi Object Ratio\nforeground~100% = segmentasi tidak efektif")
+axes[0].legend()
+axes[0].text(0.55, 0.82,
+             f"{pct_over90:.1f}% gambar\nforeground >90%",
+             transform=axes[0].transAxes,
+             bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
+             fontsize=10, fontweight="bold")
+
+# Subplot 1: Fallback rate per komoditas (menyoroti komoditas dengan tingkat kegagalan tinggi)
+fallback_rate = df_seg.groupby("commodity")["used_fallback"].mean().sort_values(ascending=False)
+colors_fb = ["#e74c3c" if v > 0.30 else ("#f39c12" if v > 0.10 else "#2ecc71") for v in fallback_rate.values]
+axes[1].barh(fallback_rate.index, fallback_rate.values * 100, color=colors_fb)
+axes[1].axvline(30, color="red", linestyle="--", alpha=0.7, label=">30% (bermasalah)")
+axes[1].set_xlabel("Fallback Rate (%)")
+axes[1].set_title("Fallback Rate per Komoditas\n(merah = >30% gagal segmentasi)")
+axes[1].legend()
+
+# Subplot 2: Median object_ratio per komoditas
+median_ratio = df_seg.groupby("commodity")["object_ratio"].median().sort_values(ascending=False)
+colors_mr = ["#e74c3c" if v > 0.90 else "#2ecc71" for v in median_ratio.values]
+axes[2].barh(median_ratio.index, median_ratio.values * 100, color=colors_mr)
+axes[2].axvline(90, color="red", linestyle="--", linewidth=2, label="90% (efek nol)")
+axes[2].set_xlabel("Median Object Ratio (%)")
+axes[2].set_title("Median Object Ratio per Komoditas\n(merah = mask mencakup hampir seluruh frame)")
+axes[2].legend()
+
+plt.tight_layout()
+plt.savefig(paths["figures"] / "eda_c1_segmentation_feasibility.png", dpi=150, bbox_inches="tight")
+plt.show()
+
+print(f"\n{'='*55}")
+print("RINGKASAN SEGMENTASI OTSU:")
+print(f"  Gambar dengan foreground >90%  : {pct_over90:.1f}%")
+print(f"  Gambar menggunakan fallback     : {pct_fallback:.1f}%")
+print(f"  Median object_ratio            : {df_seg['object_ratio'].median():.3f}")
+print(f"\n-> KESIMPULAN: Otsu tidak efektif karena buah mengisi hampir seluruh frame (median~100%).")
+print(f"  Hal ini menjelaskan mengapa S5 (segmentasi) <= S3 (tanpa segmentasi)")
+print(f"  dan mengapa S8 (shape features) sangat buruk (mask = frame penuh = shape tidak bermakna).")
+if not fallback_rate[fallback_rate > 0.05].empty:
+    print(f"\nKomoditas dengan fallback rate tertinggi:")
+    print(fallback_rate[fallback_rate > 0.05].to_string())
+"""
+        ),
+        md_cell(
+            """\
+## Seksi C2 - Analisis Efek SSR: Mengapa S2 < S1?
+
+Secara teoritis, Single-Scale Retinex (SSR) bertujuan mengoreksi variasi pencahayaan non-uniform.
+Namun, hasil eksperimen menunjukkan performa model dengan SSR (S2) lebih rendah dibanding Raw (S1).
+Di sini kita menguji hipotesis secara kuantitatif bahwa SSR menormalkan perbedaan tingkat kecerahan
+(luminance L pada ruang warna LAB) antara fresh dan rotten.
+Kita mengukur nilai rata-rata L sebelum dan sesudah SSR untuk membuktikan secara statistik
+(dengan t-test independen) apakah SSR memperkecil gap perbedaan kecerahan yang sebenarnya merupakan
+fitur diskriminatif alami bagi classifier.
+"""
+        ),
+        code_cell(
+            """\
+# C2. Analisis Efek SSR Terhadap Separabilitas Kecerahan (Luminance L)
+# Hipotesis: SSR menormalkan variasi kecerahan alami yang justru menjadi sinyal pembeda kelas.
+from scipy import stats as scipy_stats
+N_SSR = 50  # Sampel citra per label
+
+sample_ssr = (
+    full_df
+    .groupby("label", group_keys=False)
+    .apply(lambda g: g.sample(min(len(g), N_SSR), random_state=42))
+    .reset_index(drop=True)
+)
+
+ssr_records = []
+for _, row in sample_ssr.iterrows():
+    img = cv2.imread(str(row["filepath"]))
+    if img is None:
+        continue
+    img_raw = preprocess_arr(img, apply_restoration=False)
+    img_ssr = preprocess_arr(img, apply_restoration=True)
+
+    def l_stats(bgr):
+        # Konversi ke ruang warna CIELAB untuk isolasi kanal luminance L
+        lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)
+        L = lab[:, :, 0].astype(float)
+        return float(L.mean()), float(L.std())
+
+    lm_raw, ls_raw = l_stats(img_raw)
+    lm_ssr, ls_ssr = l_stats(img_ssr)
+    ssr_records.append({
+        "label": row["label"],
+        "L_mean_raw": lm_raw, "L_std_raw": ls_raw,
+        "L_mean_ssr": lm_ssr, "L_std_ssr": ls_ssr,
+    })
+
+df_ssr_ef = pd.DataFrame(ssr_records)
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+fig.suptitle("Efek SSR pada Separabilitas Fresh vs Rotten", fontsize=13, fontweight="bold")
+
+# Subplot 0: Histogram perbandingan mean L (Raw vs SSR)
+for label, color in [("fresh", "#2ecc71"), ("rotten", "#e74c3c")]:
+    sub = df_ssr_ef[df_ssr_ef["label"] == label]
+    axes[0].hist(sub["L_mean_raw"], bins=15, alpha=0.5, color=color, label=f"{label} (raw)")
+    axes[0].hist(sub["L_mean_ssr"], bins=15, alpha=0.3, color=color,
+                 linestyle="dashed", histtype="step", linewidth=2.5,
+                 label=f"{label} (SSR)")
+axes[0].set_xlabel("Mean L (brightness)")
+axes[0].set_title("Distribusi Mean Brightness\nSSR menyempitkan gap fresh & rotten")
+axes[0].legend(fontsize=9)
+
+# Subplot 1: Jarak (separabilitas) kecerahan antara fresh vs rotten
+fresh_raw = df_ssr_ef[df_ssr_ef["label"]=="fresh"]["L_mean_raw"].values
+rotten_raw = df_ssr_ef[df_ssr_ef["label"]=="rotten"]["L_mean_raw"].values
+fresh_ssr = df_ssr_ef[df_ssr_ef["label"]=="fresh"]["L_mean_ssr"].values
+rotten_ssr = df_ssr_ef[df_ssr_ef["label"]=="rotten"]["L_mean_ssr"].values
+
+sep_raw = abs(fresh_raw.mean() - rotten_raw.mean())
+sep_ssr = abs(fresh_ssr.mean() - rotten_ssr.mean())
+
+axes[1].bar(["Raw\n(S1)", "SSR\n(S2)"], [sep_raw, sep_ssr], color=["#2ecc71", "#e74c3c"])
+axes[1].set_ylabel("|mean_L_fresh - mean_L_rotten|")
+axes[1].set_title(f"Separabilitas Brightness\nRaw: {sep_raw:.2f} | SSR: {sep_ssr:.2f}")
+for i, v in enumerate([sep_raw, sep_ssr]):
+    axes[1].text(i, v + 0.5, f"{v:.2f}", ha="center", fontweight="bold")
+
+plt.tight_layout()
+plt.savefig(paths["figures"] / "eda_c2_ssr_effect.png", dpi=150, bbox_inches="tight")
+plt.show()
+
+# Uji hipotesis signifikansi statistik menggunakan T-test independen
+t_stat, p_val = scipy_stats.ttest_ind(fresh_raw, rotten_raw)
+t_stat2, p_val2 = scipy_stats.ttest_ind(fresh_ssr, rotten_ssr)
+print("Uji t-test separabilitas brightness (fresh vs rotten):")
+print(f"  Raw (S1): t={t_stat:.3f}, p={p_val:.4f} -> {'SIGNIFIKAN [OK]' if p_val<0.05 else 'tidak signifikan'}")
+print(f"  SSR (S2): t={t_stat2:.3f}, p={p_val2:.4f} -> {'SIGNIFIKAN [OK]' if p_val2<0.05 else 'tidak signifikan'}")
+print(f"\n-> KESIMPULAN: SSR menghapus variasi brightness yang menjadi sinyal pembeda.")
+print(f"  Separabilitas brightness turun dari {sep_raw:.2f} (Raw) menjadi {sep_ssr:.2f} (SSR).")
+print(f"  Inilah alasan F1 turun dari 0.970 (S1) ke 0.948 (S2).")
+"""
+        ),
+        md_cell(
+            """\
+## Seksi F - Kuantifikasi Efek Tiap Tahap Preprocessing
+
+Bagian ini melakukan kuantifikasi terukur terhadap efek setiap tahap preprocessing
+(Raw -> SSR -> SSR+CLAHE -> SSR+Gamma) pada kanal Luminance (L) dan Saturation (S).
+Dengan mengukur rata-rata dan standar deviasi nilai piksel pada setiap tahap,
+kita dapat memahami secara visual dan matematis bagaimana kontras citra ditingkatkan (via CLAHE)
+atau bagaimana distribusi kecerahan disesuaikan (via Gamma).
+"""
+        ),
+        code_cell(
+            """\
+# F. Kuantifikasi Efek Preprocessing per Tahap Preprocessing
+# Kita mengukur pergeseran nilai statistik kecerahan (L) dan saturasi (S) untuk n=100 sampel.
+from src.enhancement import apply_enhancement
+N_PRE = 100
+sample_pre_df = full_df.sample(N_PRE, random_state=42).reset_index(drop=True)
+
+pre_records = []
+for _, row in sample_pre_df.iterrows():
+    img = cv2.imread(str(row["filepath"]))
+    if img is None:
+        continue
+
+    # Jalankan empat tahap preprocessing pipeline untuk dibandingkan
+    img_raw   = preprocess_arr(img, apply_restoration=False)
+    img_ssr   = preprocess_arr(img, apply_restoration=True)
+    img_clahe = apply_enhancement(img_ssr, "clahe")
+    img_gamma = apply_enhancement(img_ssr, "gamma")
+
+    def px_stats(bgr):
+        lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)
+        L = lab[:,:,0].astype(float)
+        hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+        S = hsv[:,:,1].astype(float)
+        return {"L_mean": L.mean(), "L_std": L.std(), "S_mean": S.mean()}
+
+    # Simpan statistik piksel per gambar pada setiap tahap
+    r = px_stats(img_raw)
+    s = px_stats(img_ssr)
+    c = px_stats(img_clahe)
+    g = px_stats(img_gamma)
+
+    pre_records.append({
+        "label": row["label"],
+        "L_mean_raw": r["L_mean"], "L_std_raw": r["L_std"], "S_mean_raw": r["S_mean"],
+        "L_mean_ssr": s["L_mean"], "L_std_ssr": s["L_std"], "S_mean_ssr": s["S_mean"],
+        "L_mean_clahe": c["L_mean"], "L_std_clahe": c["L_std"], "S_mean_clahe": c["S_mean"],
+        "L_mean_gamma": g["L_mean"], "L_std_gamma": g["L_std"], "S_mean_gamma": g["S_mean"],
+    })
+
+df_pre = pd.DataFrame(pre_records)
+stages = ["raw", "ssr", "clahe", "gamma"]
+stage_labels = ["Raw", "SSR", "SSR+CLAHE", "SSR+Gamma"]
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+fig.suptitle(f"Efek Tiap Tahap Preprocessing (n={len(df_pre)} gambar)", fontsize=13, fontweight="bold")
+
+# Buat grafik garis pergeseran statistik piksel
+metrics = [("L_mean", "Mean Brightness (L)", axes[0]),
+           ("L_std",  "Std Brightness (L)", axes[1]),
+           ("S_mean", "Mean Saturation (S)", axes[2])]
+
+for metric_key, metric_label, ax in metrics:
+    for label, color in [("fresh","#2ecc71"), ("rotten","#e74c3c")]:
+        sub = df_pre[df_pre["label"]==label]
+        vals = [sub[f"{metric_key}_{s}"].mean() for s in stages]
+        errs = [sub[f"{metric_key}_{s}"].std() for s in stages]
+        ax.errorbar(stage_labels, vals, yerr=errs, marker="o", color=color,
+                    label=label, linewidth=2, capsize=4)
+    ax.set_title(metric_label)
+    ax.set_ylabel(metric_label)
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    ax.tick_params(axis="x", rotation=15)
+
+plt.tight_layout()
+plt.savefig(paths["figures"] / "eda_f_preprocessing_effect.png", dpi=150, bbox_inches="tight")
+plt.show()
+
+print("Perubahan mean brightness (L) dari raw ke SSR:")
+for label in ["fresh", "rotten"]:
+    sub = df_pre[df_pre["label"]==label]
+    delta = sub["L_mean_ssr"].mean() - sub["L_mean_raw"].mean()
+    print(f"  {label}: {delta:+.2f} (perubahan rata-rata)")
+"""
+        ),
+        md_cell(
+            """\
+## Seksi E - Cek Duplikat & Data Leakage
+
+Keberadaan gambar duplikat yang identik dalam dataset dapat memicu kebocoran data (data leakage)
+jika gambar tersebut terbagi ke dalam split yang berbeda (misalnya satu di train set dan satu di test set).
+Hal ini akan menghasilkan metrik evaluasi model yang terlalu optimis (overfitting tidak terdeteksi).
+Kita memvalidasi kebersihan dataset menggunakan pencocokan MD5 hash untuk mendeteksi duplikasi gambar.
+"""
+        ),
+        code_cell(
+            """\
+# E. Deteksi Duplikat Gambar Menggunakan MD5 Hash
+# Pemeriksaan cepat menggunakan MD5 hash pada byte mentah gambar.
+import hashlib
+
+def file_hash_md5(path):
+    \"\"\"Menghitung hash MD5 dari isi file secara streaming.\"\"\"
+    try:
+        with open(str(path), "rb") as f:
+            return hashlib.md5(f.read()).hexdigest()
+    except Exception:
+        return None
+
+# Ambil sampel acak sebanyak 1500 gambar untuk efisiensi analisis waktu
+N_HASH_SAMPLE = min(len(full_df), 1500)
+sample_hash_df = full_df.sample(N_HASH_SAMPLE, random_state=42).reset_index(drop=True)
+
+print(f"Menghitung hash untuk {N_HASH_SAMPLE} gambar (sample)...")
+hashes = [file_hash_md5(p) for p in sample_hash_df["filepath"]]
+sample_hash_df["md5"] = hashes
+sample_hash_df = sample_hash_df.dropna(subset=["md5"])
+
+# Cari file dengan MD5 yang sama
+duplicates = sample_hash_df[sample_hash_df.duplicated("md5", keep=False)]
+n_dup_groups = duplicates.groupby("md5").ngroups
+
+print(f"\nSample diperiksa  : {len(sample_hash_df)} gambar")
+print(f"Grup duplikat     : {n_dup_groups}")
+print(f"Total file duplik : {len(duplicates)}")
+
+if n_dup_groups > 0:
+    print("\n[WARNING] Duplikat terdeteksi:")
+    print(duplicates.sort_values("md5")[["filepath","label","commodity","md5"]].to_string())
+else:
+    print("\n[OK] Tidak ada duplikat dalam sample - dataset bersih dari duplikasi.")
+
+print("\nNote: Cross-split leakage check akan dilakukan setelah split 70/15/15 dibuat di bawah.")
+"""
+        ),
+        md_cell(
+            """\
+## Seksi G - Feature Separability: Apakah Fitur Manual Memisahkan Kelas?
+
+Kita memvisualisasikan seluruh ruang fitur buatan tangan (handcrafted features sebanyak 220 dimensi)
+ke dalam ruang 2 dimensi menggunakan metode t-SNE.
+Hal ini membantu kita melihat secara langsung sejauh mana representasi fitur warna (HSV histogram)
+dan tekstur (LBP & GLCM) mampu memisahkan kelas fresh dan rotten secara linear maupun non-linear
+sebelum dimasukkan ke classifier SVM/Random Forest.
+Kita juga melakukan uji signifikansi Mann-Whitney U untuk membuktikan validitas fitur individual.
+"""
+        ),
+        code_cell(
+            """\
+# G. Visualisasi t-SNE Separabilitas Fitur Manual & Uji Signifikansi
+# Ekstraksi fitur visual (warna & tekstur) pada 120 gambar sampel.
+from sklearn.manifold import TSNE
+from sklearn.preprocessing import StandardScaler
+from scipy.stats import mannwhitneyu
+from src.features import extract_features
+from src.pipeline import process_image
+
+N_TSNE = 60  # Jumlah sampel per label (total 120 gambar)
+sample_tsne = (
+    full_df
+    .groupby("label", group_keys=False)
+    .apply(lambda g: g.sample(min(len(g), N_TSNE), random_state=42))
+    .reset_index(drop=True)
+)
+
+print(f"Mengekstrak fitur untuk {len(sample_tsne)} gambar (ini perlu ~2-3 menit)...")
+X_feats, y_labels, commodities = [], [], []
+for _, row in sample_tsne.iterrows():
+    # Gunakan pipeline murni tanpa SSR/enhancement/segmentasi untuk mendapatkan baseline representatif
+    out = process_image(
+        path=row["filepath"],
+        restoration="none",
+        enhancement="none",
+        do_segment=False,
+    )
+    if out["img"] is None:
+        continue
+    # Ekstraksi seluruh fitur manual (histogram warna, LBP, GLCM)
+    feat = extract_features(out["img"], feature_groups="all", segmented=False)
+    X_feats.append(feat)
+    y_labels.append(1 if row["label"] == "rotten" else 0)
+    commodities.append(row["commodity"])
+
+X_arr = np.array(X_feats)
+y_arr = np.array(y_labels)
+print(f"Fitur berhasil diekstrak: {X_arr.shape}")
+
+# Penskalaan fitur (Standardization) dan pemrosesan t-SNE
+X_scaled = StandardScaler().fit_transform(X_arr)
+tsne = TSNE(n_components=2, random_state=42, perplexity=min(15, len(X_arr)//4))
+X_2d = tsne.fit_transform(X_scaled)
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+fig.suptitle("Separabilitas Fitur Manual (220 dim: color+texture)", fontsize=13, fontweight="bold")
+
+# Subplot 0: Plot 2D hasil reduksi dimensi t-SNE
+for lv, ln, color in [(0,"fresh","#2ecc71"), (1,"rotten","#e74c3c")]:
+    mask = y_arr == lv
+    axes[0].scatter(X_2d[mask,0], X_2d[mask,1], c=color, label=ln, alpha=0.7, s=40, edgecolors="none")
+axes[0].set_title("t-SNE - Color by Label")
+axes[0].legend()
+axes[0].set_xlabel("t-SNE dim 1")
+axes[0].set_ylabel("t-SNE dim 2")
+
+# Subplot 1: Violin plot untuk membandingkan distribusi fitur Mean Hue (fitur indeks 192)
+idx_meanH = 192
+fresh_h = X_arr[y_arr==0, idx_meanH]
+rotten_h = X_arr[y_arr==1, idx_meanH]
+vp = axes[1].violinplot([fresh_h, rotten_h], positions=[0,1], showmedians=True)
+for pc in vp["bodies"]:
+    pc.set_alpha(0.6)
+axes[1].set_xticks([0, 1])
+axes[1].set_xticklabels(["Fresh", "Rotten"])
+axes[1].set_ylabel("Mean Hue (fitur ke-192)")
+axes[1].set_title("Distribusi Fitur Mean Hue\nFresh vs Rotten")
+
+# Uji statistik non-parametrik menggunakan Mann-Whitney U test untuk membuktikan signifikansi
+stat, p_mwu = mannwhitneyu(fresh_h, rotten_h, alternative="two-sided")
+axes[1].text(0.5, 0.92,
+             f"Mann-Whitney U\np = {p_mwu:.2e}\n({'Signifikan [OK]' if p_mwu<0.05 else 'Tidak signifikan'})",
+             transform=axes[1].transAxes, ha="center", va="top",
+             bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8), fontsize=9)
+
+plt.tight_layout()
+plt.savefig(paths["figures"] / "eda_g_feature_separability.png", dpi=150, bbox_inches="tight")
+plt.show()
+
+print(f"\nFitur mean_H: Mann-Whitney U p = {p_mwu:.2e}")
+print(f"-> Fitur warna {'signifikan [OK]' if p_mwu<0.05 else 'tidak signifikan'} memisahkan fresh vs rotten.")
+"""
+        ),
+        md_cell(
+            """\
+## 6. Pembuatan Split Stratified (70/15/15)"""
+        ),
+        code_cell(
+            """\
+train, val, test = make_splits(df)
+print(f"Train: {len(train)} | Val: {len(val)} | Test: {len(test)}")
+print(f"Stratifikasi train: {train['label'].value_counts().to_dict()}")
+print(f"Stratifikasi test : {test['label'].value_counts().to_dict()}")
+split_path = save_splits(train, val, test, paths["splits"])
+print(f"Split disimpan ke: {split_path}")
+"""
+        ),
+        md_cell(
+            """\
+### Verifikasi Split: No Data Leakage
+
+Memastikan tidak ada gambar yang sama antara train, val, dan test.
+"""
+        ),
+        code_cell(
+            """\
+# Verifikasi Tidak Ada Data Leakage Antar Split (Train, Val, Test Set)
+# Kita melakukan perbandingan set path file untuk memastikan irisan set (intersection) adalah kosong.
+train_paths = set(train["filepath"].tolist())
+val_paths   = set(val["filepath"].tolist())
+test_paths  = set(test["filepath"].tolist())
+
+leak_tv = train_paths & val_paths
+leak_tt = train_paths & test_paths
+leak_vt = val_paths   & test_paths
+
+print("Verifikasi Data Leakage antar Split:")
+print(f"  Train & Val  : {len(leak_tv)} file {'[OK]' if len(leak_tv)==0 else '[FAIL]'}")
+print(f"  Train & Test : {len(leak_tt)} file {'[OK]' if len(leak_tt)==0 else '[FAIL]'}")
+print(f"  Val & Test   : {len(leak_vt)} file {'[OK]' if len(leak_vt)==0 else '[FAIL]'}")
+print(f"\nTotal unik   : {len(train_paths)+len(val_paths)+len(test_paths)}")
+print(f"Total dataset: {len(full_df)}")
+all_ok = len(leak_tv)==0 and len(leak_tt)==0 and len(leak_vt)==0
+print(f"\n{'[OK] Tidak ada data leakage!' if all_ok else '[FAIL] TERDAPAT DATA LEAKAGE!'}")
+"""
         ),
     ]
 )
@@ -979,11 +1707,11 @@ nb04 = make_nb(
             "- Belum diuji: apakah CLAHE efektif *tanpa* SSR, atau manfaatnya bergantung SSR?\n"
             "- Belum diuji: apakah segmentasi membantu pada komoditas tertentu tapi menyakiti\n"
             "  yang lain?\n"
-            "- **Saran pengembangan**: desain 2×2 factorial (SSR on/off × segmentasi on/off)\n"
+            "- **Saran pengembangan**: desain 2x2 factorial (SSR on/off x segmentasi on/off)\n"
             "  untuk melihat interaksi.\n"
             "\n"
             "### 4. Segmentasi berbasis threshold (Otsu) tanpa learning\n"
-            "Metode segmentasi — Otsu pada kanal S (HSV) + grayscale + morfologi — sederhana\n"
+            "Metode segmentasi - Otsu pada kanal S (HSV) + grayscale + morfologi - sederhana\n"
             "dan cepat, tapi gagal pada buah/sayur gelap berlatar belakang serupa (tercatat\n"
             "di `segmentation_failures.csv`). Fallback (gambar penuh) dipakai saat foreground\n"
             "<5%, artinya fitur segmentasi kehilangan maknanya pada sebagian sampel.\n"

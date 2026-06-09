@@ -74,7 +74,7 @@ def test_preprocess_from_array_restoration_ssr_differs_from_none():
     without_ssr = preprocess_from_array(img, apply_restoration=False)
     assert with_ssr.shape == without_ssr.shape == (224, 224, 3)
     assert not np.array_equal(with_ssr, without_ssr), (
-        "SSR and raw outputs must differ — restoration had no effect"
+        "SSR and raw outputs must differ - restoration had no effect"
     )
 
 

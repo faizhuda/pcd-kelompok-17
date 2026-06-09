@@ -93,20 +93,20 @@ def run_classical_scenario(
     models_dir: Path,
     cache_dir: Path | None = None,
 ) -> dict[str, Any]:
-    """Train and evaluate one classical scenario (scenario_id 1–9).
+    """Train and evaluate one classical scenario (scenario_id 1-9).
 
     Classical scenarios:
         1  raw baseline (no restoration, no enhancement)
         2  SSR restoration only
         3  SSR + CLAHE
         4  SSR + gamma
-        5  SSR + E* + segmentation + all features, SVM  ← McNemar anchor vs CNN
+        5  SSR + E* + segmentation + all features, SVM  <- McNemar anchor vs CNN
         6  SSR + E* + segmentation + color only, SVM
         7  SSR + E* + segmentation + texture only, SVM
         8  SSR + E* + segmentation + shape only, SVM
-        9  SSR + E* + segmentation + all features, RF   ← feature importance
+        9  SSR + E* + segmentation + all features, RF   <- feature importance
 
-    CNN scenarios (10–11, MobileNetV2) are handled in notebooks/03_experiments_cnn.ipynb.
+    CNN scenarios (10-11, MobileNetV2) are handled in notebooks/03_experiments_cnn.ipynb.
 
     Raises:
         KeyError: if scenario_id is not in SCENARIO_CONFIG.

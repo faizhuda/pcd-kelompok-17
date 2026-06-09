@@ -20,7 +20,7 @@ from src.pipeline import process_image
 from src.preprocessing import preprocess_from_array
 
 # ---------------------------------------------------------------------------
-# process_image — restoration propagation
+# process_image - restoration propagation
 # ---------------------------------------------------------------------------
 
 def _solid_image(color: tuple[int, int, int] = (120, 80, 60)) -> np.ndarray:
@@ -36,7 +36,7 @@ def test_process_image_restoration_ssr_differs_from_none():
     assert out_ssr["img"] is not None
     assert out_raw["img"] is not None
     assert not np.array_equal(out_ssr["img"], out_raw["img"]), (
-        "SSR and raw outputs must differ — restoration flag had no effect"
+        "SSR and raw outputs must differ - restoration flag had no effect"
     )
 
 
@@ -58,7 +58,7 @@ def test_process_image_segment_flag():
 
 
 # ---------------------------------------------------------------------------
-# run_classical_scenario — end-to-end smoke on synthetic data
+# run_classical_scenario - end-to-end smoke on synthetic data
 # (catches the predictions_s5 IndexError class of bug)
 # ---------------------------------------------------------------------------
 
@@ -146,6 +146,6 @@ def test_run_classical_scenario_s5_predictions_csv_aligned(tiny_dataset, tmp_pat
     # y_pred must align with rows in the CSV (regression test for old .iloc[DataFrame] bug)
     assert "pred" in pred_df.columns
     assert len(pred_df) == len(result["y_pred"]), (
-        "predictions_s5.csv row count must match y_pred length — "
+        "predictions_s5.csv row count must match y_pred length - "
         "mismatch indicates the old test_df.iloc[test_v] bug is back"
     )
