@@ -32,8 +32,8 @@ deteksi dataset, nol konfigurasi). Panduan lengkap: **[KAGGLE_PLAN.md](KAGGLE_PL
 | # | Notebook | Accelerator | Estimasi | Menghasilkan |
 |---|----------|-------------|----------|--------------|
 | 1 | `01_eda.ipynb` | CPU | ~20 menit | EDA + split (deterministik) |
-| 2 | `02_experiments_classical.ipynb` | CPU | ~4-8 jam (Save & Run All) | `scenario_01-09.csv`, model `svm_scenario_05.pkl` & `rf_scenario_09.pkl` |
-| 3 | `03_experiments_cnn.ipynb` | **GPU P100** | ~2-3 jam | `scenario_10-11.csv`, model `mobilenetv2_s10_stage2.h5` & `mobilenetv2_s11_stage2.h5` |
+| 2 | `02_experiments_classical.ipynb` | CPU | ~15-20 menit | `scenario_01-09.csv`, model `svm_scenario_05.pkl` & `rf_scenario_09.pkl` |
+| 3 | `03_experiments_cnn.ipynb` | **GPU P100** | ~1-1.5 jam | `scenario_10-11.csv`, model `mobilenetv2_s10_stage2.keras` & `mobilenetv2_s11_stage2.keras` |
 | 4 | `04_results_summary.ipynb` | CPU | ~5 menit | Tabel 3, semua plot |
 
 > **Catatan:** Notebook 02 harus selesai sebelum 03 (butuh model S5); 03 sebelum 04.
@@ -72,7 +72,7 @@ Untuk mengunduh dataset lengkap secara lokal, tambahkan API key Kaggle ke
 ## Testing & Linting
 
 ```bash
-pytest tests/ -v          # 57 unit tests
+pytest tests/ -v          # 64 unit tests
 python scripts/smoke_test.py   # integration smoke test (tanpa dataset)
 ruff check src/
 ```
