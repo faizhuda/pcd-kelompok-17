@@ -456,15 +456,44 @@ if uploaded_file is None:
             <tbody>
         """
         for _, row in df_metrics.iterrows():
+            rest = str(row.get('restoration', 'ssr')).upper()
+            enh = str(row.get('enhancement', 'clahe')).upper()
+            seg_val = str(row.get('segmentation', 'True')).strip().lower()
+            seg_str = 'Segmentasi' if seg_val in ('true', '1') else 'No-Seg'
+            
+            try:
+                acc_val = float(row.get('accuracy', 0.0)) * 100
+                acc_str = f"{acc_val:.2f}%"
+            except Exception:
+                acc_str = "N/A"
+                
+            try:
+                f1_val = float(row.get('f1_weighted', 0.0))
+                f1_str = f"{f1_val:.4f}"
+            except Exception:
+                f1_str = "N/A"
+                
+            try:
+                lat_val = float(row.get('inference_time_ms_per_image', 0.0))
+                lat_str = f"{lat_val:.3f} ms"
+            except Exception:
+                lat_str = "N/A"
+                
+            try:
+                samples_val = int(row.get('n_test_samples', 0))
+                samples_str = f"{samples_val} citra"
+            except Exception:
+                samples_str = "N/A"
+                
             table_html += f"""
                 <tr>
-                    <td><b>Skenario {row['scenario_id']}</b></td>
-                    <td>{row['model']}</td>
-                    <td>{row['restoration'].upper()} + {row['enhancement'].upper()} + {'Segmentasi' if row['segmentation'] else 'No-Seg'}</td>
-                    <td><span style="font-weight:700; color:#FF6B4A;">{row['accuracy']*100:.2f}%</span></td>
-                    <td>{row['f1_weighted']:.4f}</td>
-                    <td>{row['inference_time_ms_per_image']:.3f} ms</td>
-                    <td>{int(row['n_test_samples'])} citra</td>
+                    <td><b>Skenario {row.get('scenario_id', 'N/A')}</b></td>
+                    <td>{row.get('model', 'N/A')}</td>
+                    <td>{rest} + {enh} + {seg_str}</td>
+                    <td><span style="font-weight:700; color:#FF6B4A;">{acc_str}</span></td>
+                    <td>{f1_str}</td>
+                    <td>{lat_str}</td>
+                    <td>{samples_str}</td>
                 </tr>
             """
         table_html += "</tbody></table>"
@@ -547,107 +576,111 @@ else:
                 rf_pred_class = "fresh" if rf_idx == 0 else "rotten"
                 rf_confidence = rf_probs[rf_idx]
         
-        # 2. Layout: Preprocessing Steps (Left 3/5) & Predictions (Right 2/5)
-        st.markdown('<div class="section-header">Analysis Output & Comparative Prediction</div>', unsafe_allow_html=True)
+        # 2. Layout: Preprocessing Steps (Full Width)
+        st.markdown('<div class="section-header">1. Digital Image Processing (DIP) Pipeline Stages</div>', unsafe_allow_html=True)
         
-        col_main_1, col_main_2 = st.columns([3, 2])
+        st.markdown('<div class="saas-card">', unsafe_allow_html=True)
+        p_col1, p_col2, p_col3, p_col4, p_col5 = st.columns(5)
+        with p_col1:
+            st.markdown('<div class="dip-step-card"><div class="dip-step-title">1. Resized</div></div>', unsafe_allow_html=True)
+            st.image(img_resized_rgb, use_container_width=True)
+            st.caption("224x224")
+        with p_col2:
+            st.markdown('<div class="dip-step-card"><div class="dip-step-title">2. SSR</div></div>', unsafe_allow_html=True)
+            st.image(img_ssr_rgb, use_container_width=True)
+            st.caption("CIELAB L SSR")
+        with p_col3:
+            st.markdown('<div class="dip-step-card"><div class="dip-step-title">3. CLAHE</div></div>', unsafe_allow_html=True)
+            st.image(img_clahe_rgb, use_container_width=True)
+            st.caption("Adaptive Hist")
+        with p_col4:
+            st.markdown('<div class="dip-step-card"><div class="dip-step-title">4. Mask</div></div>', unsafe_allow_html=True)
+            st.image(mask_rgb, use_container_width=True)
+            st.caption(f"Ratio: {obj_ratio:.1%}")
+        with p_col5:
+            st.markdown('<div class="dip-step-card"><div class="dip-step-title">5. Segmented</div></div>', unsafe_allow_html=True)
+            st.image(img_segmented_rgb, use_container_width=True)
+            st.caption("Final Output")
+        st.markdown('</div>', unsafe_allow_html=True)
+            
+        # 3. Model Inference Comparison (3 Columns cards)
+        st.markdown('<div class="section-header">2. Multi-Model Inference Comparison</div>', unsafe_allow_html=True)
         
-        with col_main_1:
-            st.markdown('<div class="saas-card">', unsafe_allow_html=True)
-            st.markdown("<h4 style='margin-top:0; font-weight:700; color:#0f172a; margin-bottom:15px;'>Digital Image Processing (DIP) Pipeline Stages</h4>", unsafe_allow_html=True)
-            
-            p_col1, p_col2, p_col3, p_col4, p_col5 = st.columns(5)
-            with p_col1:
-                st.markdown('<div class="dip-step-card"><div class="dip-step-title">1. Resized</div></div>', unsafe_allow_html=True)
-                st.image(img_resized_rgb, use_container_width=True)
-                st.caption("224x224")
-            with p_col2:
-                st.markdown('<div class="dip-step-card"><div class="dip-step-title">2. SSR</div></div>', unsafe_allow_html=True)
-                st.image(img_ssr_rgb, use_container_width=True)
-                st.caption("CIELAB L SSR")
-            with p_col3:
-                st.markdown('<div class="dip-step-card"><div class="dip-step-title">3. CLAHE</div></div>', unsafe_allow_html=True)
-                st.image(img_clahe_rgb, use_container_width=True)
-                st.caption("Adaptive Hist")
-            with p_col4:
-                st.markdown('<div class="dip-step-card"><div class="dip-step-title">4. Mask</div></div>', unsafe_allow_html=True)
-                st.image(mask_rgb, use_container_width=True)
-                st.caption(f"Ratio: {obj_ratio:.1%}")
-            with p_col5:
-                st.markdown('<div class="dip-step-card"><div class="dip-step-title">5. Segmented</div></div>', unsafe_allow_html=True)
-                st.image(img_segmented_rgb, use_container_width=True)
-                st.caption("Final Output")
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-        with col_main_2:
-            st.markdown('<div class="saas-card">', unsafe_allow_html=True)
-            st.markdown("<h4 style='margin-top:0; font-weight:700; color:#0f172a; margin-bottom:15px;'>Model Inference Results</h4>", unsafe_allow_html=True)
-            
-            # Predict Heuristic Quality Score
-            # If fresh: Quality Score is confidence * 10
-            # If rotten: Quality Score is (1 - confidence) * 10
-            if cnn_pred_class == "fresh":
-                quality_score = cnn_confidence * 10.0
-            else:
-                quality_score = (1.0 - cnn_confidence) * 10.0
-            
-            # Clamp quality score between 1 and 10
-            quality_score = max(1.0, min(10.0, quality_score))
-            
-            # Display primary summary
+        m_col1, m_col2, m_col3 = st.columns(3)
+        
+        # Predict Heuristic Quality Score for MobileNetV2
+        if cnn_pred_class == "fresh":
+            quality_score = cnn_confidence * 10.0
+        else:
+            quality_score = (1.0 - cnn_confidence) * 10.0
+        quality_score = max(1.0, min(10.0, quality_score))
+        
+        # Card 1: CNN
+        with m_col1:
             badge_class = "badge-fresh" if cnn_pred_class == "fresh" else "badge-rotten"
             st.markdown(f"""
-            <div style="margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
-                <div style="font-size: 0.8rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Primary Prediction (MobileNetV2)</div>
-                <div style="margin-top: 8px;">
+            <div class="saas-card" style="margin-bottom: 15px;">
+                <h4 style="margin-top:0; font-weight:700; color:#0f172a; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">MobileNetV2 (CNN)</h4>
+                <div style="margin-top: 10px;">
                     <span class="badge {badge_class}">{cnn_pred_class}</span>
                 </div>
-                <div style="display: flex; gap: 40px; margin-top: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
                     <div>
-                        <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase;">CNN Confidence</div>
-                        <div style="font-size: 1.6rem; font-weight:800; color:#0f172a;">{cnn_confidence:.2%}</div>
+                        <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Confidence</div>
+                        <div style="font-size: 1.4rem; font-weight:800; color:#0f172a; margin-top:4px;">{cnn_confidence:.2%}</div>
                     </div>
                     <div>
-                        <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase;">Heuristic Quality</div>
-                        <div style="font-size: 1.6rem; font-weight:800; color:#FF6B4A;">{quality_score:.1f} / 10</div>
+                        <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Quality Score</div>
+                        <div style="font-size: 1.4rem; font-weight:800; color:#FF6B4A; margin-top:4px;">{quality_score:.1f}/10</div>
                     </div>
+                </div>
+                <div style="margin-top:15px; font-size:0.75rem; color:#64748b; border-top:1px solid #f1f5f9; padding-top:8px;">
+                    Latency: <b style="color:#334155;">{cnn_time:.2f} ms</b>
                 </div>
             </div>
             """, unsafe_allow_html=True)
             
-            # Comparative metrics summary
-            st.markdown("<div style='font-size: 0.8rem; font-weight:700; color:#94a3b8; text-transform:uppercase; margin-bottom:10px;'>Model Output Comparison</div>", unsafe_allow_html=True)
+        # Card 2: SVM
+        with m_col2:
+            badge_class = "badge-fresh" if svm_pred_class == "fresh" else "badge-rotten"
+            st.markdown(f"""
+            <div class="saas-card" style="margin-bottom: 15px;">
+                <h4 style="margin-top:0; font-weight:700; color:#0f172a; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">SVM (Classical ML)</h4>
+                <div style="margin-top: 10px;">
+                    <span class="badge {badge_class}">{svm_pred_class}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px;">
+                    <div>
+                        <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Decision Score</div>
+                        <div style="font-size: 1.4rem; font-weight:800; color:#0f172a; margin-top:4px;">{svm_decision:.3f}</div>
+                    </div>
+                </div>
+                <div style="margin-top:15px; font-size:0.75rem; color:#64748b; border-top:1px solid #f1f5f9; padding-top:8px;">
+                    Latency: <b style="color:#334155;">{svm_time:.2f} ms</b>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
             
-            comp_table = f"""
-            <table style="width:100%; font-size:0.85rem; border-collapse:collapse;">
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <th style="text-align:left; padding:8px 0; color:#475569;">Model</th>
-                    <th style="text-align:left; padding:8px 0; color:#475569;">Prediksi</th>
-                    <th style="text-align:left; padding:8px 0; color:#475569;">Keyakinan / Nilai</th>
-                    <th style="text-align:right; padding:8px 0; color:#475569;">Inference</th>
-                </tr>
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:10px 0; font-weight:700; color:#0f172a;">MobileNetV2</td>
-                    <td><span style="color:{'#0d9488' if cnn_pred_class=='fresh' else '#e53e3e'}; font-weight:700;">{cnn_pred_class.upper()}</span></td>
-                    <td>{cnn_confidence:.1%}</td>
-                    <td style="text-align:right; font-weight:500;">{cnn_time:.2f} ms</td>
-                </tr>
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:10px 0; font-weight:700; color:#0f172a;">SVM</td>
-                    <td><span style="color:{'#0d9488' if svm_pred_class=='fresh' else '#e53e3e'}; font-weight:700;">{svm_pred_class.upper()}</span></td>
-                    <td>Score: {svm_decision:.3f}</td>
-                    <td style="text-align:right; font-weight:500;">{svm_time:.2f} ms</td>
-                </tr>
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    <td style="padding:10px 0; font-weight:700; color:#0f172a;">Random Forest</td>
-                    <td><span style="color:{'#0d9488' if rf_pred_class=='fresh' else '#e53e3e'}; font-weight:700;">{rf_pred_class.upper()}</span></td>
-                    <td>{rf_confidence:.1%}</td>
-                    <td style="text-align:right; font-weight:500;">{rf_time:.2f} ms</td>
-                </tr>
-            </table>
-            """
-            st.markdown(comp_table, unsafe_allow_html=True)
-            st.markdown('</div>', unsafe_allow_html=True)
+        # Card 3: RF
+        with m_col3:
+            badge_class = "badge-fresh" if rf_pred_class == "fresh" else "badge-rotten"
+            st.markdown(f"""
+            <div class="saas-card" style="margin-bottom: 15px;">
+                <h4 style="margin-top:0; font-weight:700; color:#0f172a; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">Random Forest (Classical ML)</h4>
+                <div style="margin-top: 10px;">
+                    <span class="badge {badge_class}">{rf_pred_class}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px;">
+                    <div>
+                        <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Confidence</div>
+                        <div style="font-size: 1.4rem; font-weight:800; color:#0f172a; margin-top:4px;">{rf_confidence:.2%}</div>
+                    </div>
+                </div>
+                <div style="margin-top:15px; font-size:0.75rem; color:#64748b; border-top:1px solid #f1f5f9; padding-top:8px;">
+                    Latency: <b style="color:#334155;">{rf_time:.2f} ms</b>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
             
         # 3. Grad-CAM Explanation
         if model_cnn is not None:
