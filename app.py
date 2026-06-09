@@ -617,7 +617,7 @@ else:
         # 2. Layout: Preprocessing Steps (Full Width)
         st.markdown('<div class="section-header" style="margin-bottom: 8px;">1. Digital Image Processing (DIP) Pipeline Stages</div>', unsafe_allow_html=True)
         
-        p_col1, p_col2, p_col3, p_col4, p_col5 = st.columns(5)
+        p_col1, p_col2, p_col3, p_col4 = st.columns(4)
         with p_col1:
             st.markdown('<div class="dip-step-card"><div class="dip-step-title">1. Resized</div></div>', unsafe_allow_html=True)
             st.image(img_resized_rgb, use_container_width=True)
@@ -631,11 +631,7 @@ else:
             st.image(img_clahe_rgb, use_container_width=True)
             st.caption("Adaptive Hist")
         with p_col4:
-            st.markdown('<div class="dip-step-card"><div class="dip-step-title">4. Mask</div></div>', unsafe_allow_html=True)
-            st.image(mask_rgb, use_container_width=True)
-            st.caption(f"Ratio: {obj_ratio:.1%}")
-        with p_col5:
-            st.markdown('<div class="dip-step-card"><div class="dip-step-title">5. Segmented</div></div>', unsafe_allow_html=True)
+            st.markdown('<div class="dip-step-card"><div class="dip-step-title">4. Segmented</div></div>', unsafe_allow_html=True)
             st.image(img_segmented_rgb, use_container_width=True)
             st.caption("Final Output")
             
