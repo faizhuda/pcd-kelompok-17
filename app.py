@@ -25,137 +25,161 @@ from src.evaluate import make_gradcam_heatmap, plot_gradcam
 # Page Configuration
 # ----------------------------------------------------
 st.set_page_config(
-    page_title="Fruit Quality Analyzer & Model Comparison",
+    page_title="Fruit Quality AI Analytics Dashboard",
     page_icon="🍎",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for premium styling
+# Custom CSS for Apple-inspired SaaS Dashboard with Orange Accent
 st.markdown("""
 <style>
-    /* Global Styles */
+    /* Import fonts */
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
     
+    /* Global Overrides */
     html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', sans-serif;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: #f8fafc;
+        color: #0f172a;
     }
     
-    .main-title {
-        font-size: 2.8rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #FF4B4B 0%, #FF8533 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.2rem;
-        text-align: center;
-    }
-    
-    .sub-title {
-        font-size: 1.1rem;
-        color: #64748b;
-        text-align: center;
-        margin-bottom: 2rem;
-        font-weight: 500;
-    }
-    
-    /* Section headers */
-    .section-header {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1e293b;
-        border-left: 5px solid #FF4B4B;
-        padding-left: 10px;
-        margin-top: 1.5rem;
-        margin-bottom: 1rem;
-    }
-    
-    /* Model Card Container */
-    .model-card {
-        background: #0f172a;
-        color: #f8fafc;
+    /* Clean white card styles */
+    .saas-card {
+        background-color: #ffffff;
+        border: 1px solid #f1f5f9;
         border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 10px 15px -3px rgba(0, 0, 0, 0.03);
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+        margin-bottom: 24px;
+    }
+    .saas-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
     }
     
-    .model-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.4);
+    /* Sidebar Overrides */
+    .stSidebar {
+        background-color: #ffffff !important;
+        border-right: 1px solid #e2e8f0 !important;
     }
     
-    .model-title {
-        font-size: 1.3rem;
+    /* Accent Header styling */
+    .section-header {
+        font-size: 1.35rem;
         font-weight: 700;
-        margin-bottom: 10px;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding-bottom: 8px;
+        color: #0f172a;
+        margin-top: 1rem;
+        margin-bottom: 1.25rem;
+        padding-bottom: 6px;
+        border-bottom: 2px solid #fff0eb;
     }
     
-    /* Badges */
+    /* Accuracy badges in sidebar */
+    .sidebar-badge {
+        background-color: #fff0eb;
+        color: #FF6B4A;
+        font-weight: 700;
+        font-size: 0.75rem;
+        padding: 4px 10px;
+        border-radius: 6px;
+        border: 1px solid #ffe2d9;
+        display: inline-block;
+    }
+    
+    /* Prediction status badges */
     .badge {
         display: inline-block;
-        padding: 6px 12px;
-        font-size: 0.85rem;
-        font-weight: 700;
-        border-radius: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-top: 8px;
-        margin-bottom: 12px;
-    }
-    
-    .badge-fresh {
-        background-color: rgba(34, 197, 94, 0.2);
-        color: #22c55e;
-        border: 1px solid rgba(34, 197, 94, 0.3);
-    }
-    
-    .badge-rotten {
-        background-color: rgba(239, 68, 68, 0.2);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-    
-    .metric-value {
-        font-size: 1.8rem;
+        padding: 8px 16px;
+        font-size: 0.9rem;
         font-weight: 800;
-        color: #ffffff;
-        margin: 5px 0;
-    }
-    
-    .metric-label {
-        font-size: 0.8rem;
-        color: #94a3b8;
+        border-radius: 20px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
-    
-    /* Metrics grid layout */
-    .metrics-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-top: 15px;
+    .badge-fresh {
+        background-color: #e6fffa;
+        color: #0d9488;
+        border: 1px solid #b2f5ea;
+    }
+    .badge-rotten {
+        background-color: #fff5f5;
+        color: #e53e3e;
+        border: 1px solid #fed7d7;
     }
     
-    /* DIP Pipeline steps cards */
-    .dip-step-card {
+    /* Customize native streamlit file uploader to have dashed orange border */
+    div[data-testid="stFileUploader"] {
+        border: 2px dashed #FF6B4A;
+        border-radius: 16px;
+        padding: 24px;
+        background-color: #ffffff;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    }
+    
+    /* Zebra-striped comparison table */
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 10px 0;
+        font-size: 0.95rem;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #f1f5f9;
+        background-color: #ffffff;
+    }
+    .styled-table th {
+        background-color: #f8fafc;
+        color: #475569;
+        text-align: left;
+        font-weight: 700;
+        padding: 14px 16px;
+        border-bottom: 2px solid #f1f5f9;
+    }
+    .styled-table td {
+        padding: 14px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+    }
+    .styled-table tbody tr:nth-of-type(even) {
+        background-color: #f8fafc;
+    }
+    .styled-table tbody tr:hover {
+        background-color: #f1f5f9;
+        transition: background-color 0.2s ease;
+    }
+    
+    /* Pipeline cards layout */
+    .pipeline-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        padding: 16px;
+        background-color: #ffffff;
+        border-radius: 12px;
+        border: 1px solid #f1f5f9;
+        margin-bottom: 15px;
+    }
+    .pipeline-step {
         background-color: #f8fafc;
         border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 12px;
-        text-align: center;
+        border-radius: 8px;
+        padding: 8px 14px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #334155;
+    }
+    .pipeline-arrow {
+        color: #94a3b8;
+        font-size: 1.1rem;
+        font-weight: bold;
     }
     
-    .dip-step-title {
-        font-size: 0.9rem;
-        font-weight: 700;
-        color: #475569;
-        margin-bottom: 8px;
+    /* Text layout overrides */
+    h1, h2, h3 {
+        color: #0f172a !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -167,38 +191,32 @@ st.markdown("""
 def load_mobilenet_model():
     model_path = project_root / "results" / "models" / "mobilenetv2_s10_stage2.h5"
     if not model_path.exists():
-        st.error(f"Model file not found: {model_path}")
         return None
     try:
         import tensorflow as tf
         model = tf.keras.models.load_model(model_path)
         return model
-    except Exception as e:
-        st.error(f"Failed to load MobileNetV2 model: {e}")
+    except Exception:
         return None
 
 @st.cache_resource
 def load_svm_model():
     model_path = project_root / "results" / "models" / "svm_scenario_05.pkl"
     if not model_path.exists():
-        st.error(f"Model file not found: {model_path}")
         return None
     try:
         return joblib.load(model_path)
-    except Exception as e:
-        st.error(f"Failed to load SVM model: {e}")
+    except Exception:
         return None
 
 @st.cache_resource
 def load_rf_model():
     model_path = project_root / "results" / "models" / "rf_scenario_09.pkl"
     if not model_path.exists():
-        st.error(f"Model file not found: {model_path}")
         return None
     try:
         return joblib.load(model_path)
-    except Exception as e:
-        st.error(f"Failed to load Random Forest model: {e}")
+    except Exception:
         return None
 
 # Load models
@@ -207,199 +225,288 @@ model_svm = load_svm_model()
 model_rf = load_rf_model()
 
 # ----------------------------------------------------
-# Dashboard Layout
+# SIDEBAR
 # ----------------------------------------------------
-st.markdown('<div class="main-title">Fruit Quality Model Comparison</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">Compare classical Machine Learning vs Deep Learning on the Digital Image Processing (DIP) Pipeline</div>', unsafe_allow_html=True)
+with st.sidebar:
+    st.markdown("""
+    <div style="text-align: center; margin-top: 15px; margin-bottom: 25px;">
+        <span style="font-size: 3.5rem;">🍎</span>
+        <h2 style="margin-top: 10px; font-weight: 800; font-size: 1.4rem; color: #0f172a; letter-spacing: -0.5px;">CV Analytics</h2>
+        <span style="color: #64748b; font-size: 0.8rem; font-weight: 500;">Academic Demo Platform</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("### Models Evaluated")
+    
+    # CNN Card
+    st.markdown("""
+    <div style="background-color: white; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+        <h4 style="margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #0f172a;">MobileNetV2 (CNN)</h4>
+        <p style="margin: 0 0 10px 0; font-size: 0.75rem; color: #64748b; line-height: 1.3;">Scenario 10: Full Image Processing pipeline + Deep Learning Classification</p>
+        <span class="sidebar-badge">98.29% ACCURACY</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # SVM Card
+    st.markdown("""
+    <div style="background-color: white; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+        <h4 style="margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #0f172a;">Support Vector Machine</h4>
+        <p style="margin: 0 0 10px 0; font-size: 0.75rem; color: #64748b; line-height: 1.3;">Scenario 5: 220 manual features (HSV, GLCM, LBP) + SVM Classifier</p>
+        <span class="sidebar-badge">95.29% ACCURACY</span>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # RF Card
+    st.markdown("""
+    <div style="background-color: white; padding: 16px; border-radius: 12px; border: 1px solid #f1f5f9; margin-bottom: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+        <h4 style="margin: 0 0 6px 0; font-size: 0.95rem; font-weight: 700; color: #0f172a;">Random Forest</h4>
+        <p style="margin: 0 0 10px 0; font-size: 0.75rem; color: #64748b; line-height: 1.3;">Scenario 9: 220 manual features + Random Forest Classifier</p>
+        <span class="sidebar-badge">93.79% ACCURACY</span>
+    </div>
+    """, unsafe_allow_html=True)
 
-# Sidebar Info
-st.sidebar.image("https://img.icons8.com/color/96/000000/apple.png", width=70)
-st.sidebar.markdown("""
-### Model & Skenario:
-- **MobileNetV2 (CNN)**
-  - Skenario 10
-  - Deep Learning dengan fine-tuning 20 layer terakhir.
-- **SVM (Support Vector Machine)**
-  - Skenario 5
-  - Ekstraksi 220 fitur manual (Warna, Tekstur, Bentuk).
-- **Random Forest (RF)**
-  - Skenario 9
-  - Ekstraksi 220 fitur manual (Warna, Tekstur, Bentuk).
-""")
+# ----------------------------------------------------
+# MAIN CONTENT
+# ----------------------------------------------------
 
-# Upload section in the center
-col_up_1, col_up_2, col_up_3 = st.columns([1, 2, 1])
+# Hero Section
+st.markdown("""
+<div style="margin-top: 10px; margin-bottom: 30px;">
+    <h1 style="font-size: 2.5rem; font-weight: 800; color: #0f172a; margin-bottom: 8px; letter-spacing: -1px;">Fruit Quality Analysis Dashboard</h1>
+    <h3 style="font-size: 1.15rem; font-weight: 400; color: #64748b; margin: 0; line-height: 1.5; max-width: 900px;">
+        Comparative Evaluation of Classical Machine Learning and Deep Learning Models for Fruit Quality Classification
+    </h3>
+</div>
+""", unsafe_allow_html=True)
+
+# Top KPI Cards
+kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
+with kpi_col1:
+    st.markdown("""
+    <div class="saas-card">
+        <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Best Accuracy</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: #FF6B4A; margin-top: 6px; letter-spacing: -1px;">98.29%</div>
+        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; font-weight: 500;">MobileNetV2 (Scenario 10)</div>
+    </div>
+    """, unsafe_allow_html=True)
+with kpi_col2:
+    st.markdown("""
+    <div class="saas-card">
+        <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Fastest Model</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: #0f172a; margin-top: 6px; letter-spacing: -1px;">Random Forest</div>
+        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; font-weight: 500;">0.013 ms / Image latency</div>
+    </div>
+    """, unsafe_allow_html=True)
+with kpi_col3:
+    st.markdown("""
+    <div class="saas-card">
+        <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">Feature Extraction</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: #0f172a; margin-top: 6px; letter-spacing: -1px;">220 Dimensions</div>
+        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; font-weight: 500;">HSV Colors, GLCM Texture, Shape</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Image Upload Section
+st.markdown('<div class="section-header">Image Upload & Analysis</div>', unsafe_allow_html=True)
+
+# Render upload widget inside center column for alignment
+col_up_1, col_up_2, col_up_3 = st.columns([1, 4, 1])
 with col_up_2:
     uploaded_file = st.file_uploader(
-        "Unggah Gambar Buah Di Sini...", 
+        "Unggah gambar buah untuk analisis kualitas...", 
         type=["jpg", "jpeg", "png", "webp", "bmp"],
-        help="Mendukung gambar: Apel, Pisang, Tomat (Segar atau Busuk)"
+        help="Mendukung format gambar populer. File akan diproses secara paralel oleh seluruh skenario model."
     )
 
-# Main container
 if uploaded_file is None:
     # ----------------------------------------------------
-    # Landing / Introduction Section
+    # LANDING VIEW: Performance Analytics & Pipeline Info
     # ----------------------------------------------------
-    st.info("💡 **Silakan unggah gambar buah di atas untuk memulai analisis.**")
     
-    st.markdown('<div class="section-header">Performance Overview (Historical Test Set)</div>', unsafe_allow_html=True)
+    # 1. Pipeline Visualizations
+    st.markdown('<div class="section-header">Image Processing Pipelines</div>', unsafe_allow_html=True)
     
-    # Load and display pre-computed test metrics
-    col_metric_1, col_metric_2 = st.columns([1, 1])
-    
-    try:
-        metrics_dir = project_root / "results" / "metrics"
-        svm_csv = metrics_dir / "scenario_05.csv"
-        rf_csv = metrics_dir / "scenario_09.csv"
-        cnn_csv = metrics_dir / "scenario_10.csv"
+    col_p_1, col_p_2 = st.columns(2)
+    with col_p_1:
+        st.markdown('<div class="saas-card">', unsafe_allow_html=True)
+        st.markdown("<h4 style='margin-top:0; font-weight: 700; color:#0f172a;'>Classical Machine Learning Pipeline (S5 & S9)</h4>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:0.8rem; color:#64748b; margin-bottom: 15px;'>Citra mengalami koreksi iluminasi, segmentasi Otsu, ekstraksi manual (220 dimensi), dan klasifikasi menggunakan model SVM / RF.</p>", unsafe_allow_html=True)
+        st.markdown("""
+        <div class="pipeline-container">
+            <span class="pipeline-step">Input Image</span>
+            <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">SSR + CLAHE</span>
+            <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">Otsu Segment</span>
+            <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">Feature Extr.</span>
+            <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">SVM / RF</span>
+            <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">Prediction</span>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
         
-        metrics_list = []
-        if svm_csv.exists():
-            metrics_list.append(pd.read_csv(svm_csv))
-        if rf_csv.exists():
-            metrics_list.append(pd.read_csv(rf_csv))
-        if cnn_csv.exists():
-            metrics_list.append(pd.read_csv(cnn_csv))
-            
-        if metrics_list:
-            df_metrics = pd.concat(metrics_list, ignore_index=True)
-            # Clean dataframe for display
-            df_disp = df_metrics[[
-                "model", "accuracy", "f1_weighted", "inference_time_ms_per_image", "n_test_samples"
-            ]].copy()
-            df_disp.columns = ["Model", "Test Accuracy", "Weighted F1-Score", "Latency per Image (ms)", "Test Samples"]
-            df_disp["Test Accuracy"] = df_disp["Test Accuracy"].apply(lambda x: f"{x*100:.2f}%")
-            df_disp["Weighted F1-Score"] = df_disp["Weighted F1-Score"].apply(lambda x: f"{x:.4f}")
-            df_disp["Latency per Image (ms)"] = df_disp["Latency per Image (ms)"].apply(lambda x: f"{x:.3f} ms")
-            
-            with col_metric_1:
-                st.markdown("##### Historical Test Set Results")
-                st.dataframe(df_disp, use_container_width=True, hide_index=True)
-                
-            with col_metric_2:
-                st.markdown("##### Accuracy & Latency Tradeoff")
-                fig, ax1 = plt.subplots(figsize=(6, 3))
-                
-                models = df_metrics["model"].tolist()
-                accs = [x * 100 for x in df_metrics["accuracy"]]
-                latencies = df_metrics["inference_time_ms_per_image"].tolist()
-                
-                # Plot Accuracy
-                color = '#FF4B4B'
-                ax1.set_xlabel('Model')
-                ax1.set_ylabel('Accuracy (%)', color=color)
-                bars = ax1.bar(models, accs, color=color, alpha=0.6, width=0.4, label='Accuracy')
-                ax1.tick_params(axis='y', labelcolor=color)
-                ax1.set_ylim(80, 100)
-                
-                # Instantiate a second axes that shares the same x-axis
-                ax2 = ax1.twinx()  
-                color = '#007FFF'
-                ax2.set_ylabel('Latency (ms)', color=color)
-                ax2.plot(models, latencies, color=color, marker='o', linewidth=2, label='Latency')
-                ax2.tick_params(axis='y', labelcolor=color)
-                
-                fig.tight_layout()
-                st.pyplot(fig)
-        else:
-            st.warning("No pre-computed metrics files found in results/metrics/.")
-    except Exception as e:
-        st.error(f"Error loading historical performance: {e}")
+    with col_p_2:
+        st.markdown('<div class="saas-card">', unsafe_allow_html=True)
+        st.markdown("<h4 style='margin-top:0; font-weight: 700; color:#0f172a;'>Deep Learning Pipeline (S10)</h4>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:0.8rem; color:#64748b; margin-bottom: 15px;'>Citra mengalami pra-proses (SSR, CLAHE, segmentasi) sebelum ditransfer ke CNN MobileNetV2 dengan fine-tuning 20 layer terakhir.</p>", unsafe_allow_html=True)
+        st.markdown("""
+        <div class="pipeline-container">
+            <span class="pipeline-step">Input Image</span>
+            <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">SSR + CLAHE</span>
+            <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">Otsu Segment</span>
+            <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">MobileNetV2</span>
+            <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">Fine Tuning</span>
+            <span class="pipeline-arrow">➔</span>
+            <span class="pipeline-step">Prediction</span>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # 2. Performance Analytics
+    st.markdown('<div class="section-header">Performance Analytics (Historical Test Set)</div>', unsafe_allow_html=True)
+    
+    metrics_dir = project_root / "results" / "metrics"
+    svm_csv = metrics_dir / "scenario_05.csv"
+    rf_csv = metrics_dir / "scenario_09.csv"
+    cnn_csv = metrics_dir / "scenario_10.csv"
+    
+    metrics_list = []
+    if svm_csv.exists():
+        metrics_list.append(pd.read_csv(svm_csv))
+    if rf_csv.exists():
+        metrics_list.append(pd.read_csv(rf_csv))
+    if cnn_csv.exists():
+        metrics_list.append(pd.read_csv(cnn_csv))
         
-    st.markdown("---")
-    st.markdown("""
-    ### Tentang Sistem Perbandingan Ini
-    Proyek Pengolahan Citra Digital (PCD) ini mengimplementasikan pipeline pemrosesan lengkap untuk mendeteksi kesegaran buah (Fresh / Rotten):
-    1. **Restorasi Citra**: Menggunakan Single-Scale Retinex (SSR) pada kanal L (LAB) untuk koreksi pencahayaan.
-    2. **Peningkatan Kontras**: Menggunakan CLAHE (Contrast Limited Adaptive Histogram Equalization) untuk mengoptimalkan detail.
-    3. **Segmentasi Otsu**: Memisahkan buah dari latar belakang secara adaptif.
-    4. **Ekstraksi Fitur Klasik**: Mengekstrak 220 dimensi fitur warna (hsv histogram & moments), tekstur (GLCM & LBP), dan bentuk.
-    5. **Klasifikasi**: Membandingkan **SVM** (klasik), **Random Forest** (klasik), dan **MobileNetV2** (Deep Learning).
-    """)
+    if metrics_list:
+        df_metrics = pd.concat(metrics_list, ignore_index=True)
+        
+        # Performance Charts Column
+        st.markdown('<div class="saas-card">', unsafe_allow_html=True)
+        st.markdown("<h4 style='margin-top:0; font-weight:700; color:#0f172a; margin-bottom: 15px;'>Model Performance Comparison Charts</h4>", unsafe_allow_html=True)
+        
+        fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
+        sns.set_theme(style="white")
+        accent_color = "#FF6B4A"
+        
+        # 1. Accuracy
+        sns.barplot(x="model", y="accuracy", data=df_metrics, ax=axes[0], color=accent_color, alpha=0.9, width=0.45)
+        axes[0].set_title("Test Accuracy Comparison", fontsize=11, fontweight="bold", pad=15)
+        axes[0].set_ylabel("Accuracy", fontsize=9)
+        axes[0].set_xlabel("", fontsize=9)
+        axes[0].set_ylim(0.80, 1.0)
+        for p in axes[0].patches:
+            axes[0].annotate(f"{p.get_height()*100:.2f}%", (p.get_x() + p.get_width() / 2., p.get_height() - 0.05),
+                        ha='center', va='center', xytext=(0, 10), textcoords='offset points', fontsize=9, fontweight="bold", color="white")
+        
+        # 2. F1-Score
+        sns.barplot(x="model", y="f1_weighted", data=df_metrics, ax=axes[1], color="#334155", alpha=0.9, width=0.45)
+        axes[1].set_title("Weighted F1-Score Comparison", fontsize=11, fontweight="bold", pad=15)
+        axes[1].set_ylabel("F1-Score", fontsize=9)
+        axes[1].set_xlabel("", fontsize=9)
+        axes[1].set_ylim(0.80, 1.0)
+        for p in axes[1].patches:
+            axes[1].annotate(f"{p.get_height():.4f}", (p.get_x() + p.get_width() / 2., p.get_height() - 0.05),
+                        ha='center', va='center', xytext=(0, 10), textcoords='offset points', fontsize=9, fontweight="bold", color="white")
+        
+        # 3. Latency
+        sns.barplot(x="model", y="inference_time_ms_per_image", data=df_metrics, ax=axes[2], color="#cbd5e1", alpha=0.9, width=0.45)
+        axes[2].set_title("Inference Latency per Image (ms)", fontsize=11, fontweight="bold", pad=15)
+        axes[2].set_ylabel("Latency (ms)", fontsize=9)
+        axes[2].set_xlabel("", fontsize=9)
+        for p in axes[2].patches:
+            axes[2].annotate(f"{p.get_height():.3f} ms", (p.get_x() + p.get_width() / 2., p.get_height() + 0.1),
+                        ha='center', va='center', xytext=(0, 5), textcoords='offset points', fontsize=9, fontweight="bold", color="#334155")
+            
+        for ax in axes:
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['left'].set_color("#f1f5f9")
+            ax.spines['bottom'].set_color("#cbd5e1")
+            ax.tick_params(axis='both', colors='#475569', labelsize=9)
+            
+        plt.tight_layout()
+        st.pyplot(fig)
+        st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Comparison Table
+        st.markdown('<div class="saas-card">', unsafe_allow_html=True)
+        st.markdown("<h4 style='margin-top:0; font-weight:700; color:#0f172a; margin-bottom: 15px;'>Model Performance Comparison Table</h4>", unsafe_allow_html=True)
+        
+        table_html = """
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Model Skenario</th>
+                    <th>Tipe Model</th>
+                    <th>Pra-proses Citra</th>
+                    <th>Akurasi Pengujian</th>
+                    <th>Weighted F1-Score</th>
+                    <th>Latency per Citra</th>
+                    <th>Ukuran Sampel</th>
+                </tr>
+            </thead>
+            <tbody>
+        """
+        for _, row in df_metrics.iterrows():
+            table_html += f"""
+                <tr>
+                    <td><b>Skenario {row['scenario_id']}</b></td>
+                    <td>{row['model']}</td>
+                    <td>{row['restoration'].upper()} + {row['enhancement'].upper()} + {'Segmentasi' if row['segmentation'] else 'No-Seg'}</td>
+                    <td><span style="font-weight:700; color:#FF6B4A;">{row['accuracy']*100:.2f}%</span></td>
+                    <td>{row['f1_weighted']:.4f}</td>
+                    <td>{row['inference_time_ms_per_image']:.3f} ms</td>
+                    <td>{int(row['n_test_samples'])} citra</td>
+                </tr>
+            """
+        table_html += "</tbody></table>"
+        st.markdown(table_html, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.warning("Data metrik hasil pengujian tidak ditemukan di folder results/metrics/.")
 
 else:
-    # Read uploaded image
+    # ----------------------------------------------------
+    # ACTIVE INFERENCE VIEW: Uploaded Image Processing
+    # ----------------------------------------------------
     file_bytes = np.frombuffer(uploaded_file.read(), np.uint8)
     img_bgr = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
     
     if img_bgr is None:
-        st.error("Error: Gambar tidak dapat dimuat. Pastikan file adalah gambar valid.")
+        st.error("Gagal memuat gambar. Harap unggah gambar yang valid.")
     else:
-        # Save BGR image for processing
         h, w = img_bgr.shape[:2]
         
-        # ----------------------------------------------------
-        # 1. DIP Pipeline Visualizer
-        # ----------------------------------------------------
-        st.markdown('<div class="section-header">1. Digital Image Processing (DIP) Pipeline Steps</div>', unsafe_allow_html=True)
-        
-        # Extract individual steps
-        img_original = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-        
-        # Resize to standard input shape (224, 224)
+        # 1. Run full DIP pipeline
         img_resized = cv2.resize(img_bgr, (224, 224), interpolation=cv2.INTER_LINEAR)
         img_resized_rgb = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB)
         
-        # Step 2: SSR
         img_ssr = apply_ssr(img_resized)
         img_ssr_rgb = cv2.cvtColor(img_ssr, cv2.COLOR_BGR2RGB)
         
-        # Step 3: CLAHE
         img_clahe = apply_enhancement(img_ssr, "clahe")
         img_clahe_rgb = cv2.cvtColor(img_clahe, cv2.COLOR_BGR2RGB)
         
-        # Step 4: Segmented
         img_segmented, mask, obj_ratio, fallback = segment_fruit(img_clahe)
         img_segmented_rgb = cv2.cvtColor(img_segmented, cv2.COLOR_BGR2RGB)
+        mask_rgb = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
         
-        # Display steps in columns
-        col1, col2, col3, col4, col5 = st.columns(5)
-        
-        with col1:
-            st.markdown('<div class="dip-step-card"><div class="dip-step-title">Original (Resized)</div></div>', unsafe_allow_html=True)
-            st.image(img_resized_rgb, use_container_width=True)
-            st.caption(f"Dim: {w}x{h} → 224x224")
-            
-        with col2:
-            st.markdown('<div class="dip-step-card"><div class="dip-step-title">SSR Illumination</div></div>', unsafe_allow_html=True)
-            st.image(img_ssr_rgb, use_container_width=True)
-            st.caption("Retinex on L Channel")
-            
-        with col3:
-            st.markdown('<div class="dip-step-card"><div class="dip-step-title">CLAHE Enhanced</div></div>', unsafe_allow_html=True)
-            st.image(img_clahe_rgb, use_container_width=True)
-            st.caption("Adaptive Contrast")
-            
-        with col4:
-            st.markdown('<div class="dip-step-card"><div class="dip-step-title">Otsu Fruit Mask</div></div>', unsafe_allow_html=True)
-            # Convert single-channel mask to RGB to display reliably in Streamlit
-            mask_rgb = cv2.cvtColor(mask, cv2.COLOR_GRAY2RGB)
-            st.image(mask_rgb, use_container_width=True)
-            st.caption(f"Obj ratio: {obj_ratio:.2%}")
-            
-        with col5:
-            st.markdown('<div class="dip-step-card"><div class="dip-step-title">Segmented Image</div></div>', unsafe_allow_html=True)
-            st.image(img_segmented_rgb, use_container_width=True)
-            st.caption("Foreground Output")
-            
-        # ----------------------------------------------------
-        # 2. Perform Model Inference
-        # ----------------------------------------------------
-        st.markdown('<div class="section-header">2. Multi-Model Inference & Prediction</div>', unsafe_allow_html=True)
-        
-        # We need features for SVM and RF
-        with st.spinner("Extracting features and running classification..."):
-            # Extract features from the segmented CLAHE image
-            # Features = color + texture + shape (220 dim)
+        # Run predictions in the background
+        with st.spinner("Mengekstrak fitur dan menjalankan seluruh model..."):
             try:
                 features = extract_features(img_clahe, mask, feature_groups="all", segmented=True)
                 features_input = features.reshape(1, -1)
-            except Exception as e:
-                st.error(f"Gagal mengekstrak fitur manual: {e}")
+            except Exception:
                 features_input = None
                 
-            # Process CNN input
             cnn_input = image_to_cnn_input(img_segmented)
             
             # Predict MobileNetV2
@@ -439,99 +546,137 @@ else:
                 rf_time = (time.perf_counter() - t0) * 1000
                 rf_pred_class = "fresh" if rf_idx == 0 else "rotten"
                 rf_confidence = rf_probs[rf_idx]
-                
-        # Display inference results in 3 cards
-        m_col1, m_col2, m_col3 = st.columns(3)
         
-        # Card 1: CNN
-        with m_col1:
+        # 2. Layout: Preprocessing Steps (Left 3/5) & Predictions (Right 2/5)
+        st.markdown('<div class="section-header">Analysis Output & Comparative Prediction</div>', unsafe_allow_html=True)
+        
+        col_main_1, col_main_2 = st.columns([3, 2])
+        
+        with col_main_1:
+            st.markdown('<div class="saas-card">', unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-top:0; font-weight:700; color:#0f172a; margin-bottom:15px;'>Digital Image Processing (DIP) Pipeline Stages</h4>", unsafe_allow_html=True)
+            
+            p_col1, p_col2, p_col3, p_col4, p_col5 = st.columns(5)
+            with p_col1:
+                st.markdown('<div class="dip-step-card"><div class="dip-step-title">1. Resized</div></div>', unsafe_allow_html=True)
+                st.image(img_resized_rgb, use_container_width=True)
+                st.caption("224x224")
+            with p_col2:
+                st.markdown('<div class="dip-step-card"><div class="dip-step-title">2. SSR</div></div>', unsafe_allow_html=True)
+                st.image(img_ssr_rgb, use_container_width=True)
+                st.caption("CIELAB L SSR")
+            with p_col3:
+                st.markdown('<div class="dip-step-card"><div class="dip-step-title">3. CLAHE</div></div>', unsafe_allow_html=True)
+                st.image(img_clahe_rgb, use_container_width=True)
+                st.caption("Adaptive Hist")
+            with p_col4:
+                st.markdown('<div class="dip-step-card"><div class="dip-step-title">4. Mask</div></div>', unsafe_allow_html=True)
+                st.image(mask_rgb, use_container_width=True)
+                st.caption(f"Ratio: {obj_ratio:.1%}")
+            with p_col5:
+                st.markdown('<div class="dip-step-card"><div class="dip-step-title">5. Segmented</div></div>', unsafe_allow_html=True)
+                st.image(img_segmented_rgb, use_container_width=True)
+                st.caption("Final Output")
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        with col_main_2:
+            st.markdown('<div class="saas-card">', unsafe_allow_html=True)
+            st.markdown("<h4 style='margin-top:0; font-weight:700; color:#0f172a; margin-bottom:15px;'>Model Inference Results</h4>", unsafe_allow_html=True)
+            
+            # Predict Heuristic Quality Score
+            # If fresh: Quality Score is confidence * 10
+            # If rotten: Quality Score is (1 - confidence) * 10
+            if cnn_pred_class == "fresh":
+                quality_score = cnn_confidence * 10.0
+            else:
+                quality_score = (1.0 - cnn_confidence) * 10.0
+            
+            # Clamp quality score between 1 and 10
+            quality_score = max(1.0, min(10.0, quality_score))
+            
+            # Display primary summary
             badge_class = "badge-fresh" if cnn_pred_class == "fresh" else "badge-rotten"
             st.markdown(f"""
-            <div class="model-card">
-                <div class="model-title">MobileNetV2 (CNN)</div>
-                <div class="badge {badge_class}">{cnn_pred_class}</div>
-                <div class="metrics-grid">
+            <div style="margin-bottom: 20px; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px;">
+                <div style="font-size: 0.8rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Primary Prediction (MobileNetV2)</div>
+                <div style="margin-top: 8px;">
+                    <span class="badge {badge_class}">{cnn_pred_class}</span>
+                </div>
+                <div style="display: flex; gap: 40px; margin-top: 15px;">
                     <div>
-                        <div class="metric-label">Confidence</div>
-                        <div class="metric-value">{cnn_confidence:.2%}</div>
+                        <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase;">CNN Confidence</div>
+                        <div style="font-size: 1.6rem; font-weight:800; color:#0f172a;">{cnn_confidence:.2%}</div>
                     </div>
                     <div>
-                        <div class="metric-label">Latency</div>
-                        <div class="metric-value">{cnn_time:.2f} ms</div>
+                        <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase;">Heuristic Quality</div>
+                        <div style="font-size: 1.6rem; font-weight:800; color:#FF6B4A;">{quality_score:.1f} / 10</div>
                     </div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
             
-        # Card 2: SVM
-        with m_col2:
-            badge_class = "badge-fresh" if svm_pred_class == "fresh" else "badge-rotten"
-            # Format decision score representation
-            decision_text = f"{svm_decision:.3f}"
-            st.markdown(f"""
-            <div class="model-card">
-                <div class="model-title">Support Vector Machine (SVM)</div>
-                <div class="badge {badge_class}">{svm_pred_class}</div>
-                <div class="metrics-grid">
-                    <div>
-                        <div class="metric-label">Decision Score</div>
-                        <div class="metric-value">{decision_text}</div>
-                    </div>
-                    <div>
-                        <div class="metric-label">Latency</div>
-                        <div class="metric-value">{svm_time:.2f} ms</div>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            # Comparative metrics summary
+            st.markdown("<div style='font-size: 0.8rem; font-weight:700; color:#94a3b8; text-transform:uppercase; margin-bottom:10px;'>Model Output Comparison</div>", unsafe_allow_html=True)
             
-        # Card 3: Random Forest
-        with m_col3:
-            badge_class = "badge-fresh" if rf_pred_class == "fresh" else "badge-rotten"
-            st.markdown(f"""
-            <div class="model-card">
-                <div class="model-title">Random Forest (RF)</div>
-                <div class="badge {badge_class}">{rf_pred_class}</div>
-                <div class="metrics-grid">
-                    <div>
-                        <div class="metric-label">Confidence</div>
-                        <div class="metric-value">{rf_confidence:.2%}</div>
-                    </div>
-                    <div>
-                        <div class="metric-label">Latency</div>
-                        <div class="metric-value">{rf_time:.2f} ms</div>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            comp_table = f"""
+            <table style="width:100%; font-size:0.85rem; border-collapse:collapse;">
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    <th style="text-align:left; padding:8px 0; color:#475569;">Model</th>
+                    <th style="text-align:left; padding:8px 0; color:#475569;">Prediksi</th>
+                    <th style="text-align:left; padding:8px 0; color:#475569;">Keyakinan / Nilai</th>
+                    <th style="text-align:right; padding:8px 0; color:#475569;">Inference</th>
+                </tr>
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:10px 0; font-weight:700; color:#0f172a;">MobileNetV2</td>
+                    <td><span style="color:{'#0d9488' if cnn_pred_class=='fresh' else '#e53e3e'}; font-weight:700;">{cnn_pred_class.upper()}</span></td>
+                    <td>{cnn_confidence:.1%}</td>
+                    <td style="text-align:right; font-weight:500;">{cnn_time:.2f} ms</td>
+                </tr>
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:10px 0; font-weight:700; color:#0f172a;">SVM</td>
+                    <td><span style="color:{'#0d9488' if svm_pred_class=='fresh' else '#e53e3e'}; font-weight:700;">{svm_pred_class.upper()}</span></td>
+                    <td>Score: {svm_decision:.3f}</td>
+                    <td style="text-align:right; font-weight:500;">{svm_time:.2f} ms</td>
+                </tr>
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:10px 0; font-weight:700; color:#0f172a;">Random Forest</td>
+                    <td><span style="color:{'#0d9488' if rf_pred_class=='fresh' else '#e53e3e'}; font-weight:700;">{rf_pred_class.upper()}</span></td>
+                    <td>{rf_confidence:.1%}</td>
+                    <td style="text-align:right; font-weight:500;">{rf_time:.2f} ms</td>
+                </tr>
+            </table>
+            """
+            st.markdown(comp_table, unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
             
-        # ----------------------------------------------------
-        # 3. Grad-CAM Visualization
-        # ----------------------------------------------------
+        # 3. Grad-CAM Explanation
         if model_cnn is not None:
-            st.markdown('<div class="section-header">3. Deep Learning Explanation (Grad-CAM)</div>', unsafe_allow_html=True)
+            st.markdown('<div class="section-header">Deep Learning Explainability (Grad-CAM Activation Map)</div>', unsafe_allow_html=True)
             
-            with st.spinner("Generating Grad-CAM heatmap..."):
+            with st.spinner("Menghitung heatmap aktivasi Grad-CAM..."):
                 try:
                     heatmap = make_gradcam_heatmap(model_cnn, cnn_input)
                     
-                    # Create custom overlay
+                    # Compute overlay BGR -> RGB
                     heatmap_resized = cv2.resize(heatmap, (img_segmented.shape[1], img_segmented.shape[0]))
                     heatmap_uint8 = np.uint8(255 * heatmap_resized)
                     heatmap_color = cv2.applyColorMap(heatmap_uint8, cv2.COLORMAP_JET)
                     
                     img_u8 = to_uint8(img_segmented)
-                    overlay = cv2.addWeighted(img_u8, 0.6, heatmap_color, 0.4, 0)
+                    overlay = cv2.addWeighted(img_u8, 0.65, heatmap_color, 0.35, 0)
                     overlay_rgb = cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB)
                     
-                    # Display Side-by-Side
                     g_col1, g_col2 = st.columns(2)
                     with g_col1:
-                        st.markdown("##### Preprocessed Image (Input to CNN)")
+                        st.markdown('<div class="saas-card" style="text-align: center;">', unsafe_allow_html=True)
+                        st.markdown("<h5>Segmented Input (MobileNetV2 Input)</h5>", unsafe_allow_html=True)
                         st.image(img_segmented_rgb, use_container_width=True)
+                        st.markdown('</div>', unsafe_allow_html=True)
                     with g_col2:
-                        st.markdown("##### Grad-CAM Focus Area (Where CNN Looks)")
+                        st.markdown('<div class="saas-card" style="text-align: center;">', unsafe_allow_html=True)
+                        st.markdown("<h5>Grad-CAM Attention Heatmap</h5>", unsafe_allow_html=True)
                         st.image(overlay_rgb, use_container_width=True)
-                        st.caption("Daerah berwarna merah mengindikasikan fitur/area yang paling menentukan keputusan klasifikasi model CNN.")
+                        st.caption("Peta panas berwarna merah/jingga menunjukkan fitur citra yang menjadi fokus utama neural network dalam membedakan kualitas segar vs busuk.")
+                        st.markdown('</div>', unsafe_allow_html=True)
                 except Exception as e:
                     st.warning(f"Grad-CAM could not be generated: {e}")
