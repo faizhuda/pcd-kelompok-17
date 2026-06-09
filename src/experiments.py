@@ -55,6 +55,42 @@ def extract_split_matrix(
                 return data["X"], data["y"], valid_df
             # Stale/mismatched cache (different split or old format) -> recompute.
 
+        # Fast path slicing: if feature_groups is a subset (color, texture, shape)
+        # and do_segment is True, slice from the pre-computed 'all' cache to avoid
+        # re-processing raw images.
+        if feature_groups in ("color", "texture", "shape") and do_segment:
+            npz_all_key = f"{split_name}_{restoration}_{enhancement}_{do_segment}_all"
+            npz_all_file = cache_path / f"features_{npz_all_key}.npz"
+            if npz_all_file.exists():
+                data_all = np.load(npz_all_file, allow_pickle=True)
+                cached_files = data_all["df_files"].tolist() if "df_files" in data_all else None
+                valid_idx = data_all["valid_idx"].tolist()
+                cache_ok = (
+                    cached_files == current_files
+                    and (not valid_idx or max(valid_idx) < len(df))
+                )
+                if cache_ok:
+                    X_all = data_all["X"]
+                    y = data_all["y"]
+                    valid_df = df.iloc[valid_idx].reset_index(drop=True)
+                    if feature_groups == "color":
+                        X = X_all[:, 0:201]
+                    elif feature_groups == "texture":
+                        X = X_all[:, 201:215]
+                    elif feature_groups == "shape":
+                        X = X_all[:, 215:220]
+                    else:
+                        X = X_all
+                    # Cache the sliced result for faster reload next time
+                    np.savez(
+                        npz_file,
+                        X=X,
+                        y=y,
+                        valid_idx=np.array(valid_idx),
+                        df_files=np.array(current_files),
+                    )
+                    return X, y, valid_df
+
     from src.utils import get_project_paths
 
     failure_log = get_project_paths()["metrics"] / "segmentation_failures.csv"
