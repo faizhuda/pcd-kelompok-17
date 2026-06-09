@@ -173,26 +173,72 @@ def build_dataset_index(raw_dir: str | Path) -> pd.DataFrame:
     return df
 
 
+def calculate_phash(filepath: str | Path) -> str:
+    """
+    Calculate a 64-bit perceptual difference hash (dHash) for an image.
+    Returns a 16-character hexadecimal string representation.
+    """
+    import cv2
+
+    try:
+        img = cv2.imread(str(filepath), cv2.IMREAD_GRAYSCALE)
+        if img is None:
+            return ""
+        # Resize to 9x8 (9 columns, 8 rows)
+        resized = cv2.resize(img, (9, 8), interpolation=cv2.INTER_AREA)
+        # Compute difference between columns
+        diff = resized[:, 1:] > resized[:, :-1]
+        bits = diff.flatten()
+        hash_val = 0
+        for bit in bits:
+            hash_val = (hash_val << 1) | int(bit)
+        return f"{hash_val:016x}"
+    except Exception:
+        return ""
+
+
 def make_splits(df: pd.DataFrame, seed: int = SEED) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Stratified 70% train / 15% val / 15% test by commodity x label.
+    Uses perceptual hashing (pHash) to keep duplicates/near-duplicates in the same split.
     """
     work = df.copy()
     if "strat_key" not in work.columns:
         work["strat_key"] = work["commodity"] + "_" + work["label"]
 
-    train, temp = train_test_split(
-        work,
+    # Calculate pHash for all rows to prevent near-duplicate leakage
+    work["phash"] = work["filepath"].apply(calculate_phash)
+
+    # Assign unique dummy hash for empty ones (unreadable images) so they don't group together
+    empty_mask = work["phash"] == ""
+    if empty_mask.any():
+        work.loc[empty_mask, "phash"] = [f"empty_{i}" for i in range(empty_mask.sum())]
+
+    # Group by phash, choosing the first strat_key for each unique phash group
+    grouped = work.groupby("phash").agg(
+        strat_key=("strat_key", "first"),
+        count=("filepath", "count")
+    ).reset_index()
+
+    # Split the unique hashes using stratified split based on their strat_key
+    train_hashes, temp_hashes = train_test_split(
+        grouped,
         test_size=0.30,
-        stratify=work["strat_key"],
+        stratify=grouped["strat_key"],
         random_state=seed,
     )
-    val, test = train_test_split(
-        temp,
+    val_hashes, test_hashes = train_test_split(
+        temp_hashes,
         test_size=0.50,
-        stratify=temp["strat_key"],
+        stratify=temp_hashes["strat_key"],
         random_state=seed,
     )
+
+    # Reconstruct train/val/test dataframes from hashes
+    train = work[work["phash"].isin(train_hashes["phash"])].drop(columns=["phash"])
+    val = work[work["phash"].isin(val_hashes["phash"])].drop(columns=["phash"])
+    test = work[work["phash"].isin(test_hashes["phash"])].drop(columns=["phash"])
+
     return train.reset_index(drop=True), val.reset_index(drop=True), test.reset_index(drop=True)
 
 

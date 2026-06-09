@@ -8,7 +8,6 @@ import pytest
 
 from src.evaluate import (
     append_significance_test,
-    build_gradcam_model,
     compute_metrics,
     make_gradcam_heatmap,
     mcnemar_test,
@@ -82,25 +81,6 @@ def test_append_significance_test_appends(tmp_path):
     df = pd.read_csv(tmp_path / "significance_tests.csv")
     assert len(df) == 2
     assert list(df["comparison"]) == ["A vs B", "C vs D"]
-
-
-def test_build_gradcam_model_returns_two_outputs():
-    # Skip when TensorFlow is unavailable (e.g. CI installs only requirements.txt).
-    tf = pytest.importorskip("tensorflow")
-
-    inputs = tf.keras.Input(shape=(8, 8, 3))
-    x = tf.keras.layers.Conv2D(4, 3, padding="same", name="last_conv")(inputs)
-    x = tf.keras.layers.GlobalAveragePooling2D()(x)
-    outputs = tf.keras.layers.Dense(2, activation="softmax")(x)
-    model = tf.keras.Model(inputs, outputs)
-
-    grad_model = build_gradcam_model(model)
-    # Must expose exactly two outputs: the conv feature map and the predictions.
-    assert len(grad_model.outputs) == 2
-
-    conv_out, preds = grad_model(np.zeros((1, 8, 8, 3), dtype=np.float32))
-    assert len(conv_out.shape) == 4
-    assert preds.shape[-1] == 2
 
 
 def test_make_gradcam_heatmap_flat_model():

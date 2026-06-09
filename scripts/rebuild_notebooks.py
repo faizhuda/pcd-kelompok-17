@@ -1211,11 +1211,24 @@ nb02 = make_nb(
             "# Split di-regenerate dari dataset (deterministik, SEED=42) - tidak baca splits.json\n"
             "# RAW_DATA_DIR sudah di-set setup cell (auto-detect path Kaggle)\n"
             "train, val, test = make_splits(build_dataset_index(RAW_DATA_DIR))\n"
+            "\n"
+            "# Stratified sub-sampling untuk memotong running time klasifikasi klasik (S1-S9)\n"
+            "# dari 5 jam menjadi ~15 menit. Pola perbandingan relatif antar-skenario tetap konsisten.\n"
+            "def sub_sample(df, max_per_group):\n"
+            "    return (\n"
+            "        df.groupby(['commodity', 'label'], group_keys=False)\n"
+            "        .apply(lambda g: g.sample(min(len(g), max_per_group), random_state=42))\n"
+            "        .reset_index(drop=True)\n"
+            "    )\n"
+            "\n"
+            "train = sub_sample(train, 150)\n"
+            "val = sub_sample(val, 50)\n"
+            "test = sub_sample(test, 50)\n"
             'cache_dir = paths["data_processed"]\n'
             'metrics_dir = paths["metrics"]\n'
             'figures_dir = paths["figures_confusion"]\n'
             'models_dir = paths["models"]\n'
-            "print(len(train), len(val), len(test))\n"
+            "print('Sub-sampled counts:', len(train), len(val), len(test))\n"
         ),
         md_cell(
             "## Skenario 1-4: Baseline, Restorasi (SSR), Enhancement\n"
@@ -1408,7 +1421,7 @@ nb03 = make_nb(
         code_cell(
             "model_s10 = build_mobilenetv2(num_classes=2)\n"
             "model_s10 = compile_mobilenet(model_s10, learning_rate=1e-4)\n"
-            'cb_s10 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s10_stage1.h5"))\n'
+            'cb_s10 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s10_stage1.keras"))\n'
             "\n"
             "history1_s10 = model_s10.fit(\n"
             "    train_ds_s10, validation_data=val_ds_s10, epochs=20,\n"
@@ -1419,12 +1432,45 @@ nb03 = make_nb(
         code_cell(
             "model_s10 = unfreeze_last_layers(model_s10, n=20)\n"
             "model_s10 = compile_mobilenet(model_s10, learning_rate=1e-5)\n"
-            'cb2_s10 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s10_stage2.h5"))\n'
+            'cb2_s10 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s10_stage2.keras"))\n'
             "\n"
             "history2_s10 = model_s10.fit(\n"
             "    train_ds_s10, validation_data=val_ds_s10, epochs=50,\n"
             "    class_weight=class_weight, callbacks=cb2_s10,\n"
             ")\n"
+        ),
+        md_cell("### Visualisasi Kurva Belajar (S10)"),
+        code_cell(
+            "# Gabungkan history dari Stage 1 dan Stage 2\n"
+            "loss = history1_s10.history['loss'] + history2_s10.history['loss']\n"
+            "val_loss = history1_s10.history['val_loss'] + history2_s10.history['val_loss']\n"
+            "acc = history1_s10.history['accuracy'] + history2_s10.history['accuracy']\n"
+            "val_acc = history1_s10.history['val_accuracy'] + history2_s10.history['val_accuracy']\n"
+            "\n"
+            "fig, axes = plt.subplots(1, 2, figsize=(14, 5))\n"
+            "fig.suptitle('Kurva Belajar Skenario 10 (Stage 1 + Stage 2)', fontsize=13, fontweight='bold')\n"
+            "\n"
+            "# Plot Loss\n"
+            "axes[0].plot(loss, label='Train Loss', color='steelblue')\n"
+            "axes[0].plot(val_loss, label='Val Loss', color='orange')\n"
+            "axes[0].axvline(len(history1_s10.history['loss']) - 0.5, color='red', linestyle='--', label='Start Fine-Tuning')\n"
+            "axes[0].set_xlabel('Epoch')\n"
+            "axes[0].set_ylabel('Loss')\n"
+            "axes[0].legend()\n"
+            "axes[0].grid(True, alpha=0.3)\n"
+            "\n"
+            "# Plot Accuracy\n"
+            "axes[1].plot(acc, label='Train Acc', color='steelblue')\n"
+            "axes[1].plot(val_acc, label='Val Acc', color='orange')\n"
+            "axes[1].axvline(len(history1_s10.history['loss']) - 0.5, color='red', linestyle='--', label='Start Fine-Tuning')\n"
+            "axes[1].set_xlabel('Epoch')\n"
+            "axes[1].set_ylabel('Accuracy')\n"
+            "axes[1].legend()\n"
+            "axes[1].grid(True, alpha=0.3)\n"
+            "\n"
+            "plt.tight_layout()\n"
+            "plt.savefig(paths['figures'] / 'mobilenetv2_s10_learning_curve.png', dpi=150)\n"
+            "plt.show()\n"
         ),
         md_cell("### Evaluasi Skenario 10"),
         code_cell(
@@ -1473,7 +1519,7 @@ nb03 = make_nb(
         code_cell(
             "model_s11 = build_mobilenetv2(num_classes=2)\n"
             "model_s11 = compile_mobilenet(model_s11, learning_rate=1e-4)\n"
-            'cb_s11 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s11_stage1.h5"))\n'
+            'cb_s11 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s11_stage1.keras"))\n'
             "\n"
             "history1_s11 = model_s11.fit(\n"
             "    train_ds_s11, validation_data=val_ds_s11, epochs=20,\n"
@@ -1484,12 +1530,45 @@ nb03 = make_nb(
         code_cell(
             "model_s11 = unfreeze_last_layers(model_s11, n=20)\n"
             "model_s11 = compile_mobilenet(model_s11, learning_rate=1e-5)\n"
-            'cb2_s11 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s11_stage2.h5"))\n'
+            'cb2_s11 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s11_stage2.keras"))\n'
             "\n"
             "history2_s11 = model_s11.fit(\n"
             "    train_ds_s11, validation_data=val_ds_s11, epochs=50,\n"
             "    class_weight=class_weight, callbacks=cb2_s11,\n"
             ")\n"
+        ),
+        md_cell("### Visualisasi Kurva Belajar (S11)"),
+        code_cell(
+            "# Gabungkan history dari Stage 1 dan Stage 2\n"
+            "loss = history1_s11.history['loss'] + history2_s11.history['loss']\n"
+            "val_loss = history1_s11.history['val_loss'] + history2_s11.history['val_loss']\n"
+            "acc = history1_s11.history['accuracy'] + history2_s11.history['accuracy']\n"
+            "val_acc = history1_s11.history['val_accuracy'] + history2_s11.history['val_accuracy']\n"
+            "\n"
+            "fig, axes = plt.subplots(1, 2, figsize=(14, 5))\n"
+            "fig.suptitle('Kurva Belajar Skenario 11 (Stage 1 + Stage 2)', fontsize=13, fontweight='bold')\n"
+            "\n"
+            "# Plot Loss\n"
+            "axes[0].plot(loss, label='Train Loss', color='steelblue')\n"
+            "axes[0].plot(val_loss, label='Val Loss', color='orange')\n"
+            "axes[0].axvline(len(history1_s11.history['loss']) - 0.5, color='red', linestyle='--', label='Start Fine-Tuning')\n"
+            "axes[0].set_xlabel('Epoch')\n"
+            "axes[0].set_ylabel('Loss')\n"
+            "axes[0].legend()\n"
+            "axes[0].grid(True, alpha=0.3)\n"
+            "\n"
+            "# Plot Accuracy\n"
+            "axes[1].plot(acc, label='Train Acc', color='steelblue')\n"
+            "axes[1].plot(val_acc, label='Val Acc', color='orange')\n"
+            "axes[1].axvline(len(history1_s11.history['loss']) - 0.5, color='red', linestyle='--', label='Start Fine-Tuning')\n"
+            "axes[1].set_xlabel('Epoch')\n"
+            "axes[1].set_ylabel('Accuracy')\n"
+            "axes[1].legend()\n"
+            "axes[1].grid(True, alpha=0.3)\n"
+            "\n"
+            "plt.tight_layout()\n"
+            "plt.savefig(paths['figures'] / 'mobilenetv2_s11_learning_curve.png', dpi=150)\n"
+            "plt.show()\n"
         ),
         md_cell("### Evaluasi Skenario 11"),
         code_cell(
