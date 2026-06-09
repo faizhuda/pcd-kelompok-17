@@ -369,8 +369,7 @@ shape_df = pd.DataFrame(shapes, columns=["height", "width"])
 print("Statistik resolusi citra (sample 300):")
 print(shape_df.describe().round(1))
 n_unique = len(shape_df.drop_duplicates())
-print(f"
-Jumlah ukuran unik: {n_unique}")
+print(f"\\nJumlah ukuran unik: {n_unique}")
 if n_unique <= 10:
     print("Ukuran unik:", shape_df.drop_duplicates().values.tolist())
 """
@@ -392,8 +391,7 @@ for i, comm in enumerate(commodities):
             img = cv2.imread(subset.iloc[0]["filepath"])
             if img is not None:
                 ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-        ax.set_title(f"{comm}
-({label})", fontsize=7)
+        ax.set_title(f"{comm}\\n({label})", fontsize=7)
         ax.axis("off")
 plt.suptitle("Sampel per Komoditas - kiri: fresh, kanan: rotten", fontsize=10)
 plt.tight_layout()
@@ -473,8 +471,7 @@ for ax, (fresh_hist, rotten_hist, title, xlabel) in zip(axes, channel_data):
     ax.legend()
 
 plt.suptitle(
-    "Distribusi Warna HSV: Fresh vs Rotten (ternormalisasi per-citra)
-"
+    "Distribusi Warna HSV: Fresh vs Rotten (ternormalisasi per-citra)\\n"
     "Perbedaan bentuk pada H, S, V memotivasi HSV histogram sebagai fitur warna utama",
     fontsize=10,
 )
@@ -626,8 +623,7 @@ for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):
         axes[row, col].set_title(f"{label} - {title}", fontsize=9)
         axes[row, col].axis("off")
 plt.suptitle(
-    "Efek Single-Scale Retinex (SSR)
-"
+    "Efek Single-Scale Retinex (SSR)\\n"
     "Koreksi pencahayaan non-uniform: area gelap dinaikkan, area sangat terang direduksi",
     fontsize=10,
 )
@@ -653,12 +649,10 @@ for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):
     ]
     for col, (image, title) in enumerate(columns):
         axes[row, col].imshow(image)
-        axes[row, col].set_title(f"{label}
-{title}", fontsize=9)
+        axes[row, col].set_title(f"{label}\\n{title}", fontsize=9)
         axes[row, col].axis("off")
 plt.suptitle(
-    "Perbandingan Enhancement Method
-"
+    "Perbandingan Enhancement Method\\n"
     "E* (enhancement terbaik) dipilih otomatis berdasarkan validation F1 pada S2-S4",
     fontsize=10,
 )
@@ -691,8 +685,7 @@ for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):
     columns = [
         (cv2.cvtColor(cv2.resize(img_bgr, (224, 224)), cv2.COLOR_BGR2RGB), "Original", None),
         (cv2.cvtColor(ssr_img,  cv2.COLOR_BGR2RGB), "SSR", None),
-        (binary_mask, f"Mask Otsu
-{ratio_note}foreground={obj_ratio:.0%}", "gray"),
+        (binary_mask, f"Mask Otsu\\n{ratio_note}foreground={obj_ratio:.0%}", "gray"),
         (cv2.cvtColor(masked, cv2.COLOR_BGR2RGB), "Hasil Segmentasi", None),
     ]
     for col, (image, title, cmap) in enumerate(columns):
@@ -702,12 +695,10 @@ for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):
             axes[row, col].imshow(image, cmap=cmap, vmin=0, vmax=255)
         else:
             axes[row, col].imshow(image, cmap=cmap)
-        axes[row, col].set_title(f"{label}
-{title}", fontsize=9)
+        axes[row, col].set_title(f"{label}\\n{title}", fontsize=9)
         axes[row, col].axis("off")
 plt.suptitle(
-    "Segmentasi Otsu + Morfologi (ellipse kernel open->close + largest contour)
-"
+    "Segmentasi Otsu + Morfologi (ellipse kernel open->close + largest contour)\\n"
     "Pada dataset ini mask cenderung menutupi seluruh frame (foreground~100%) -> segmentasi tidak efektif",
     fontsize=10,
 )
