@@ -76,10 +76,8 @@ def process_image(
 
 def image_to_cnn_input(img_bgr: np.ndarray) -> np.ndarray:
     """Convert uint8 BGR to float32 [-1,1] NHWC batch of 1 for MobileNetV2."""
-    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
-
     rgb = cv2.cvtColor(to_uint8(img_bgr), cv2.COLOR_BGR2RGB)
-    normalized = preprocess_input(rgb.astype(np.float32))
+    normalized = (rgb.astype(np.float32) / 127.5) - 1.0
     return np.expand_dims(normalized, axis=0)
 
 
