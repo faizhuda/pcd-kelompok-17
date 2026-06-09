@@ -37,8 +37,8 @@ def build_svm_pipeline(random_state: int = 42, cv: int = 3, n_jobs: int = -1, ve
         ]
     )
     param_grid = {
-        "svm__C": [0.1, 1, 10, 100],
-        "svm__gamma": ["scale", "auto", 0.001, 0.01, 0.1],
+        "svm__C": [1, 10],
+        "svm__gamma": ["scale", 0.01],
     }
     return GridSearchCV(
         pipeline,
