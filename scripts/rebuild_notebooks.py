@@ -266,7 +266,7 @@ axes[0].set_xlabel("Jumlah")
 colors_bar = ["#e74c3c" if v > 2 or v < 0.5 else "#2ecc71" for v in pivot["ratio_fresh_rotten"]]
 axes[1].barh(pivot.index, pivot["ratio_fresh_rotten"], color=colors_bar)
 axes[1].axvline(1.0, color="red", linestyle="--", label="Balanced (ratio=1)")
-axes[1].set_title("Fresh/Rotten Ratio per Komoditas\n(merah = imbalance >2x atau <0.5x)")
+axes[1].set_title("Fresh/Rotten Ratio per Komoditas\\n(merah = imbalance >2x atau <0.5x)")
 axes[1].set_xlabel("Ratio fresh:rotten")
 axes[1].legend()
 
@@ -275,10 +275,10 @@ plt.tight_layout()
 plt.savefig(paths["figures"] / "eda_a_class_imbalance.png", dpi=150, bbox_inches="tight")
 plt.show()
 
-print("\nImbalance summary:")
+print("\\nImbalance summary:")
 print(pivot[["fresh","rotten","ratio_fresh_rotten"]].to_string())
 global_ratio = (full_df["label"]=="fresh").sum() / (full_df["label"]=="rotten").sum()
-print(f"\nGlobal fresh/rotten ratio: {global_ratio:.3f}")
+print(f"\\nGlobal fresh/rotten ratio: {global_ratio:.3f}")
 """
         ),
         md_cell(
@@ -338,7 +338,7 @@ min_side = df_res.groupby("commodity")["min_side"].min().sort_values()
 colors_res = ["#e74c3c" if v < 224 else "#2ecc71" for v in min_side.values]
 axes[2].barh(min_side.index, min_side.values, color=colors_res)
 axes[2].axvline(224, color="red", linestyle="--", label="Target 224px")
-axes[2].set_title("Resolusi Minimum per Komoditas\n(merah = < 224px)")
+axes[2].set_title("Resolusi Minimum per Komoditas\\n(merah = < 224px)")
 axes[2].set_xlabel("Min side (px)")
 axes[2].legend()
 
@@ -369,7 +369,8 @@ shape_df = pd.DataFrame(shapes, columns=["height", "width"])
 print("Statistik resolusi citra (sample 300):")
 print(shape_df.describe().round(1))
 n_unique = len(shape_df.drop_duplicates())
-print(f"\nJumlah ukuran unik: {n_unique}")
+print(f"
+Jumlah ukuran unik: {n_unique}")
 if n_unique <= 10:
     print("Ukuran unik:", shape_df.drop_duplicates().values.tolist())
 """
@@ -391,7 +392,8 @@ for i, comm in enumerate(commodities):
             img = cv2.imread(subset.iloc[0]["filepath"])
             if img is not None:
                 ax.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-        ax.set_title(f"{comm}\n({label})", fontsize=7)
+        ax.set_title(f"{comm}
+({label})", fontsize=7)
         ax.axis("off")
 plt.suptitle("Sampel per Komoditas - kiri: fresh, kanan: rotten", fontsize=10)
 plt.tight_layout()
@@ -471,7 +473,8 @@ for ax, (fresh_hist, rotten_hist, title, xlabel) in zip(axes, channel_data):
     ax.legend()
 
 plt.suptitle(
-    "Distribusi Warna HSV: Fresh vs Rotten (ternormalisasi per-citra)\n"
+    "Distribusi Warna HSV: Fresh vs Rotten (ternormalisasi per-citra)
+"
     "Perbedaan bentuk pada H, S, V memotivasi HSV histogram sebagai fitur warna utama",
     fontsize=10,
 )
@@ -547,7 +550,7 @@ axes[0].barh(df_sep["commodity"], df_sep["cohen_d"], color=bar_colors)
 axes[0].axvline(1.5, color="green", linestyle="--", alpha=0.7, label="d=1.5 (Mudah)")
 axes[0].axvline(0.5, color="orange", linestyle="--", alpha=0.7, label="d=0.5 (Sedang)")
 axes[0].set_xlabel("Cohen's d")
-axes[0].set_title("Cohen's d per Komoditas\n(separabilitas hue fresh vs rotten)")
+axes[0].set_title("Cohen's d per Komoditas\\n(separabilitas hue fresh vs rotten)")
 from matplotlib.patches import Patch
 legend_el = [Patch(facecolor="#2ecc71", label="Mudah (d>1.5)"),
               Patch(facecolor="#f39c12", label="Sedang (0.5<d<=1.5)"),
@@ -564,7 +567,7 @@ mx = max(df_sep[["mean_H_fresh","mean_H_rotten"]].max())
 axes[1].plot([mn, mx], [mn, mx], "k--", alpha=0.3, label="Fresh = Rotten")
 axes[1].set_xlabel("Mean Hue - Fresh")
 axes[1].set_ylabel("Mean Hue - Rotten")
-axes[1].set_title("Mean Hue Fresh vs Rotten\n(jauh dari diagonal = mudah dibedakan)")
+axes[1].set_title("Mean Hue Fresh vs Rotten\\n(jauh dari diagonal = mudah dibedakan)")
 axes[1].legend()
 
 plt.tight_layout()
@@ -574,14 +577,14 @@ plt.show()
 n_easy   = (df_sep["difficulty"] == "Mudah").sum()
 n_medium = (df_sep["difficulty"] == "Sedang").sum()
 n_hard   = (df_sep["difficulty"] == "Sulit").sum()
-print(f"\nDistribusi kesulitan komoditas:")
+print(f"\\nDistribusi kesulitan komoditas:")
 print(f"  Mudah (d>1.5)         : {n_easy}/{len(df_sep)} komoditas")
 print(f"  Sedang (0.5<d<=1.5)    : {n_medium}/{len(df_sep)} komoditas")
 print(f"  Sulit (d<=0.5)         : {n_hard}/{len(df_sep)} komoditas")
-print(f"\n-> Mayoritas komoditas memiliki perbedaan warna yang jelas (d tinggi).")
+print(f"\\n-> Mayoritas komoditas memiliki perbedaan warna yang jelas (d tinggi).")
 print(f"  Ini menjelaskan mengapa S1 (raw baseline) sudah mencapai F1=0.970.")
 if not df_sep[df_sep["difficulty"]=="Sulit"].empty:
-    print(f"\nKomoditas SULIT (kemungkinan sumber error):")
+    print(f"\\nKomoditas SULIT (kemungkinan sumber error):")
     print(df_sep[df_sep["difficulty"]=="Sulit"][["commodity","delta_H","cohen_d"]].to_string())
 """
         ),
@@ -623,7 +626,8 @@ for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):
         axes[row, col].set_title(f"{label} - {title}", fontsize=9)
         axes[row, col].axis("off")
 plt.suptitle(
-    "Efek Single-Scale Retinex (SSR)\n"
+    "Efek Single-Scale Retinex (SSR)
+"
     "Koreksi pencahayaan non-uniform: area gelap dinaikkan, area sangat terang direduksi",
     fontsize=10,
 )
@@ -649,10 +653,12 @@ for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):
     ]
     for col, (image, title) in enumerate(columns):
         axes[row, col].imshow(image)
-        axes[row, col].set_title(f"{label}\n{title}", fontsize=9)
+        axes[row, col].set_title(f"{label}
+{title}", fontsize=9)
         axes[row, col].axis("off")
 plt.suptitle(
-    "Perbandingan Enhancement Method\n"
+    "Perbandingan Enhancement Method
+"
     "E* (enhancement terbaik) dipilih otomatis berdasarkan validation F1 pada S2-S4",
     fontsize=10,
 )
@@ -685,7 +691,8 @@ for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):
     columns = [
         (cv2.cvtColor(cv2.resize(img_bgr, (224, 224)), cv2.COLOR_BGR2RGB), "Original", None),
         (cv2.cvtColor(ssr_img,  cv2.COLOR_BGR2RGB), "SSR", None),
-        (binary_mask, f"Mask Otsu\n{ratio_note}foreground={obj_ratio:.0%}", "gray"),
+        (binary_mask, f"Mask Otsu
+{ratio_note}foreground={obj_ratio:.0%}", "gray"),
         (cv2.cvtColor(masked, cv2.COLOR_BGR2RGB), "Hasil Segmentasi", None),
     ]
     for col, (image, title, cmap) in enumerate(columns):
@@ -695,10 +702,12 @@ for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):
             axes[row, col].imshow(image, cmap=cmap, vmin=0, vmax=255)
         else:
             axes[row, col].imshow(image, cmap=cmap)
-        axes[row, col].set_title(f"{label}\n{title}", fontsize=9)
+        axes[row, col].set_title(f"{label}
+{title}", fontsize=9)
         axes[row, col].axis("off")
 plt.suptitle(
-    "Segmentasi Otsu + Morfologi (ellipse kernel open->close + largest contour)\n"
+    "Segmentasi Otsu + Morfologi (ellipse kernel open->close + largest contour)
+"
     "Pada dataset ini mask cenderung menutupi seluruh frame (foreground~100%) -> segmentasi tidak efektif",
     fontsize=10,
 )
@@ -764,10 +773,10 @@ axes[0].axvline(0.90, color="red", linestyle="--", linewidth=2, label="90% (gaga
 axes[0].axvline(0.05, color="orange", linestyle="--", linewidth=2, label="5% (fallback)")
 axes[0].set_xlabel("Object Ratio (foreground %)")
 axes[0].set_ylabel("Jumlah gambar")
-axes[0].set_title("Distribusi Object Ratio\nforeground~100% = segmentasi tidak efektif")
+axes[0].set_title("Distribusi Object Ratio\\nforeground~100% = segmentasi tidak efektif")
 axes[0].legend()
 axes[0].text(0.55, 0.82,
-             f"{pct_over90:.1f}% gambar\nforeground >90%",
+             f"{pct_over90:.1f}% gambar\\nforeground >90%",
              transform=axes[0].transAxes,
              bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8),
              fontsize=10, fontweight="bold")
@@ -778,7 +787,7 @@ colors_fb = ["#e74c3c" if v > 0.30 else ("#f39c12" if v > 0.10 else "#2ecc71") f
 axes[1].barh(fallback_rate.index, fallback_rate.values * 100, color=colors_fb)
 axes[1].axvline(30, color="red", linestyle="--", alpha=0.7, label=">30% (bermasalah)")
 axes[1].set_xlabel("Fallback Rate (%)")
-axes[1].set_title("Fallback Rate per Komoditas\n(merah = >30% gagal segmentasi)")
+axes[1].set_title("Fallback Rate per Komoditas\\n(merah = >30% gagal segmentasi)")
 axes[1].legend()
 
 # Subplot 2: Median object_ratio per komoditas
@@ -787,23 +796,23 @@ colors_mr = ["#e74c3c" if v > 0.90 else "#2ecc71" for v in median_ratio.values]
 axes[2].barh(median_ratio.index, median_ratio.values * 100, color=colors_mr)
 axes[2].axvline(90, color="red", linestyle="--", linewidth=2, label="90% (efek nol)")
 axes[2].set_xlabel("Median Object Ratio (%)")
-axes[2].set_title("Median Object Ratio per Komoditas\n(merah = mask mencakup hampir seluruh frame)")
+axes[2].set_title("Median Object Ratio per Komoditas\\n(merah = mask mencakup hampir seluruh frame)")
 axes[2].legend()
 
 plt.tight_layout()
 plt.savefig(paths["figures"] / "eda_c1_segmentation_feasibility.png", dpi=150, bbox_inches="tight")
 plt.show()
 
-print(f"\n{'='*55}")
+print(f"\\n{'='*55}")
 print("RINGKASAN SEGMENTASI OTSU:")
 print(f"  Gambar dengan foreground >90%  : {pct_over90:.1f}%")
 print(f"  Gambar menggunakan fallback     : {pct_fallback:.1f}%")
 print(f"  Median object_ratio            : {df_seg['object_ratio'].median():.3f}")
-print(f"\n-> KESIMPULAN: Otsu tidak efektif karena buah mengisi hampir seluruh frame (median~100%).")
+print(f"\\n-> KESIMPULAN: Otsu tidak efektif karena buah mengisi hampir seluruh frame (median~100%).")
 print(f"  Hal ini menjelaskan mengapa S5 (segmentasi) <= S3 (tanpa segmentasi)")
 print(f"  dan mengapa S8 (shape features) sangat buruk (mask = frame penuh = shape tidak bermakna).")
 if not fallback_rate[fallback_rate > 0.05].empty:
-    print(f"\nKomoditas dengan fallback rate tertinggi:")
+    print(f"\\nKomoditas dengan fallback rate tertinggi:")
     print(fallback_rate[fallback_rate > 0.05].to_string())
 """
         ),
@@ -869,7 +878,7 @@ for label, color in [("fresh", "#2ecc71"), ("rotten", "#e74c3c")]:
                  linestyle="dashed", histtype="step", linewidth=2.5,
                  label=f"{label} (SSR)")
 axes[0].set_xlabel("Mean L (brightness)")
-axes[0].set_title("Distribusi Mean Brightness\nSSR menyempitkan gap fresh & rotten")
+axes[0].set_title("Distribusi Mean Brightness\\nSSR menyempitkan gap fresh & rotten")
 axes[0].legend(fontsize=9)
 
 # Subplot 1: Jarak (separabilitas) kecerahan antara fresh vs rotten
@@ -881,9 +890,9 @@ rotten_ssr = df_ssr_ef[df_ssr_ef["label"]=="rotten"]["L_mean_ssr"].values
 sep_raw = abs(fresh_raw.mean() - rotten_raw.mean())
 sep_ssr = abs(fresh_ssr.mean() - rotten_ssr.mean())
 
-axes[1].bar(["Raw\n(S1)", "SSR\n(S2)"], [sep_raw, sep_ssr], color=["#2ecc71", "#e74c3c"])
+axes[1].bar(["Raw\\n(S1)", "SSR\\n(S2)"], [sep_raw, sep_ssr], color=["#2ecc71", "#e74c3c"])
 axes[1].set_ylabel("|mean_L_fresh - mean_L_rotten|")
-axes[1].set_title(f"Separabilitas Brightness\nRaw: {sep_raw:.2f} | SSR: {sep_ssr:.2f}")
+axes[1].set_title(f"Separabilitas Brightness\\nRaw: {sep_raw:.2f} | SSR: {sep_ssr:.2f}")
 for i, v in enumerate([sep_raw, sep_ssr]):
     axes[1].text(i, v + 0.5, f"{v:.2f}", ha="center", fontweight="bold")
 
@@ -897,7 +906,7 @@ t_stat2, p_val2 = scipy_stats.ttest_ind(fresh_ssr, rotten_ssr)
 print("Uji t-test separabilitas brightness (fresh vs rotten):")
 print(f"  Raw (S1): t={t_stat:.3f}, p={p_val:.4f} -> {'SIGNIFIKAN [OK]' if p_val<0.05 else 'tidak signifikan'}")
 print(f"  SSR (S2): t={t_stat2:.3f}, p={p_val2:.4f} -> {'SIGNIFIKAN [OK]' if p_val2<0.05 else 'tidak signifikan'}")
-print(f"\n-> KESIMPULAN: SSR menghapus variasi brightness yang menjadi sinyal pembeda.")
+print(f"\\n-> KESIMPULAN: SSR menghapus variasi brightness yang menjadi sinyal pembeda.")
 print(f"  Separabilitas brightness turun dari {sep_raw:.2f} (Raw) menjadi {sep_ssr:.2f} (SSR).")
 print(f"  Inilah alasan F1 turun dari 0.970 (S1) ke 0.948 (S2).")
 """
@@ -1027,17 +1036,17 @@ sample_hash_df = sample_hash_df.dropna(subset=["md5"])
 duplicates = sample_hash_df[sample_hash_df.duplicated("md5", keep=False)]
 n_dup_groups = duplicates.groupby("md5").ngroups
 
-print(f"\nSample diperiksa  : {len(sample_hash_df)} gambar")
+print(f"\\nSample diperiksa  : {len(sample_hash_df)} gambar")
 print(f"Grup duplikat     : {n_dup_groups}")
 print(f"Total file duplik : {len(duplicates)}")
 
 if n_dup_groups > 0:
-    print("\n[WARNING] Duplikat terdeteksi:")
+    print("\\n[WARNING] Duplikat terdeteksi:")
     print(duplicates.sort_values("md5")[["filepath","label","commodity","md5"]].to_string())
 else:
-    print("\n[OK] Tidak ada duplikat dalam sample - dataset bersih dari duplikasi.")
+    print("\\n[OK] Tidak ada duplikat dalam sample - dataset bersih dari duplikasi.")
 
-print("\nNote: Cross-split leakage check akan dilakukan setelah split 70/15/15 dibuat di bawah.")
+print("\\nNote: Cross-split leakage check akan dilakukan setelah split 70/15/15 dibuat di bawah.")
 """
         ),
         md_cell(
@@ -1119,12 +1128,12 @@ for pc in vp["bodies"]:
 axes[1].set_xticks([0, 1])
 axes[1].set_xticklabels(["Fresh", "Rotten"])
 axes[1].set_ylabel("Mean Hue (fitur ke-192)")
-axes[1].set_title("Distribusi Fitur Mean Hue\nFresh vs Rotten")
+axes[1].set_title("Distribusi Fitur Mean Hue\\nFresh vs Rotten")
 
 # Uji statistik non-parametrik menggunakan Mann-Whitney U test untuk membuktikan signifikansi
 stat, p_mwu = mannwhitneyu(fresh_h, rotten_h, alternative="two-sided")
 axes[1].text(0.5, 0.92,
-             f"Mann-Whitney U\np = {p_mwu:.2e}\n({'Signifikan [OK]' if p_mwu<0.05 else 'Tidak signifikan'})",
+             f"Mann-Whitney U\\np = {p_mwu:.2e}\\n({'Signifikan [OK]' if p_mwu<0.05 else 'Tidak signifikan'})",
              transform=axes[1].transAxes, ha="center", va="top",
              bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.8), fontsize=9)
 
@@ -1132,7 +1141,7 @@ plt.tight_layout()
 plt.savefig(paths["figures"] / "eda_g_feature_separability.png", dpi=150, bbox_inches="tight")
 plt.show()
 
-print(f"\nFitur mean_H: Mann-Whitney U p = {p_mwu:.2e}")
+print(f"\\nFitur mean_H: Mann-Whitney U p = {p_mwu:.2e}")
 print(f"-> Fitur warna {'signifikan [OK]' if p_mwu<0.05 else 'tidak signifikan'} memisahkan fresh vs rotten.")
 """
         ),
@@ -1173,10 +1182,10 @@ print("Verifikasi Data Leakage antar Split:")
 print(f"  Train & Val  : {len(leak_tv)} file {'[OK]' if len(leak_tv)==0 else '[FAIL]'}")
 print(f"  Train & Test : {len(leak_tt)} file {'[OK]' if len(leak_tt)==0 else '[FAIL]'}")
 print(f"  Val & Test   : {len(leak_vt)} file {'[OK]' if len(leak_vt)==0 else '[FAIL]'}")
-print(f"\nTotal unik   : {len(train_paths)+len(val_paths)+len(test_paths)}")
+print(f"\\nTotal unik   : {len(train_paths)+len(val_paths)+len(test_paths)}")
 print(f"Total dataset: {len(full_df)}")
 all_ok = len(leak_tv)==0 and len(leak_tt)==0 and len(leak_vt)==0
-print(f"\n{'[OK] Tidak ada data leakage!' if all_ok else '[FAIL] TERDAPAT DATA LEAKAGE!'}")
+print(f"\\n{'[OK] Tidak ada data leakage!' if all_ok else '[FAIL] TERDAPAT DATA LEAKAGE!'}")
 """
         ),
     ]
