@@ -800,9 +800,9 @@ print("RINGKASAN SEGMENTASI OTSU:")
 print(f"  Gambar dengan foreground >90%  : {pct_over90:.1f}%")
 print(f"  Gambar menggunakan fallback     : {pct_fallback:.1f}%")
 print(f"  Median object_ratio            : {df_seg['object_ratio'].median():.3f}")
-print(f"\\n-> KESIMPULAN: Otsu tidak efektif karena buah mengisi hampir seluruh frame (median~100%).")
-print(f"  Hal ini menjelaskan mengapa S5 (segmentasi) <= S3 (tanpa segmentasi)")
-print(f"  dan mengapa S8 (shape features) sangat buruk (mask = frame penuh = shape tidak bermakna).")
+print(f"\\n-> ANALISIS KELAYAKAN: Otsu tidak efektif karena buah mengisi hampir seluruh frame (median~100%).")
+print(f"  Ini memicu HIPOTESIS awal bahwa S5 (segmentasi) tidak akan lebih baik dari S3 (tanpa segmentasi),")
+print(f"  dan S8 (shape features) akan berkinerja buruk karena masker cenderung selalu penuh (frame-sized).")
 if not fallback_rate[fallback_rate > 0.05].empty:
     print(f"\\nKomoditas dengan fallback rate tertinggi:")
     print(fallback_rate[fallback_rate > 0.05].to_string())
@@ -810,15 +810,15 @@ if not fallback_rate[fallback_rate > 0.05].empty:
         ),
         md_cell(
             """\
-## Seksi C2 - Analisis Efek SSR: Mengapa S2 < S1?
+## Seksi C2 - Analisis Efek SSR: Hipotesis Dampak Terhadap Klasifikasi
 
 Secara teoritis, Single-Scale Retinex (SSR) bertujuan mengoreksi variasi pencahayaan non-uniform.
-Namun, hasil eksperimen menunjukkan performa model dengan SSR (S2) lebih rendah dibanding Raw (S1).
-Di sini kita menguji hipotesis secara kuantitatif bahwa SSR menormalkan perbedaan tingkat kecerahan
+Namun, dalam pengenalan pembusukan citra, tingkat kecerahan dan lebam lokal adalah informasi penting.
+Di sini kita menguji hipotesis kelayakan awal secara kuantitatif bahwa SSR menormalkan perbedaan tingkat kecerahan
 (luminance L pada ruang warna LAB) antara fresh dan rotten.
-Kita mengukur nilai rata-rata L sebelum dan sesudah SSR untuk membuktikan secara statistik
+Kita mengukur nilai rata-rata L sebelum dan sesudah SSR untuk memproyeksikan secara statistik
 (dengan t-test independen) apakah SSR memperkecil gap perbedaan kecerahan yang sebenarnya merupakan
-fitur diskriminatif alami bagi classifier.
+fitur diskriminatif alami bagi classifier, sehingga berpotensi menurunkan performa model.
 """
         ),
         code_cell(
@@ -898,9 +898,9 @@ t_stat2, p_val2 = scipy_stats.ttest_ind(fresh_ssr, rotten_ssr)
 print("Uji t-test separabilitas brightness (fresh vs rotten):")
 print(f"  Raw (S1): t={t_stat:.3f}, p={p_val:.4f} -> {'SIGNIFIKAN [OK]' if p_val<0.05 else 'tidak signifikan'}")
 print(f"  SSR (S2): t={t_stat2:.3f}, p={p_val2:.4f} -> {'SIGNIFIKAN [OK]' if p_val2<0.05 else 'tidak signifikan'}")
-print(f"\\n-> KESIMPULAN: SSR menghapus variasi brightness yang menjadi sinyal pembeda.")
-print(f"  Separabilitas brightness turun dari {sep_raw:.2f} (Raw) menjadi {sep_ssr:.2f} (SSR).")
-print(f"  Inilah alasan F1 turun dari 0.970 (S1) ke 0.948 (S2).")
+print(f"\\n-> ANALISIS KELAYAKAN: SSR mengurangi variasi brightness alami (gap) antara fresh & rotten.")
+print(f"  Jarak mean brightness menyempit dari {sep_raw:.2f} (Raw) menjadi {sep_ssr:.2f} (SSR).")
+print(f"  Ini memicu HIPOTESIS awal bahwa SSR (S2) berpotensi menurunkan performa model dibanding Raw (S1).")
 """
         ),
         md_cell(
@@ -1329,7 +1329,8 @@ nb03 = make_nb(
         KAGGLE_SETUP,
         code_cell(
             NEW_ROOT
-            + "import numpy as np\n"
+            + "import matplotlib.pyplot as plt\n"
+            "import numpy as np\n"
             "import pandas as pd\n"
             "import tensorflow as tf\n"
             "from sklearn.utils.class_weight import compute_class_weight\n"
