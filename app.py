@@ -1,4 +1,5 @@
 import sys
+import textwrap
 import time
 from pathlib import Path
 import cv2
@@ -53,10 +54,28 @@ st.markdown("""
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 10px 15px -3px rgba(0, 0, 0, 0.03);
         transition: transform 0.25s ease, box-shadow 0.25s ease;
         margin-bottom: 24px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        box-sizing: border-box;
     }
     .saas-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 12px 20px -8px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02);
+    }
+    
+    .card-title {
+        margin-top: 0 !important;
+        font-weight: 700 !important;
+        color: #0f172a !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        padding-bottom: 8px !important;
+        min-height: 56px !important;
+        display: flex !important;
+        align-items: center !important;
+        font-size: 1.1rem !important;
+        line-height: 1.3 !important;
     }
     
     /* Sidebar Overrides */
@@ -440,21 +459,21 @@ if uploaded_file is None:
         st.markdown('<div class="saas-card">', unsafe_allow_html=True)
         st.markdown("<h4 style='margin-top:0; font-weight:700; color:#0f172a; margin-bottom: 15px;'>Model Performance Comparison Table</h4>", unsafe_allow_html=True)
         
-        table_html = """
-        <table class="styled-table">
-            <thead>
-                <tr>
-                    <th>Model Skenario</th>
-                    <th>Tipe Model</th>
-                    <th>Pra-proses Citra</th>
-                    <th>Akurasi Pengujian</th>
-                    <th>Weighted F1-Score</th>
-                    <th>Latency per Citra</th>
-                    <th>Ukuran Sampel</th>
-                </tr>
-            </thead>
-            <tbody>
-        """
+        table_html = textwrap.dedent("""\
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Model Skenario</th>
+                        <th>Tipe Model</th>
+                        <th>Pra-proses Citra</th>
+                        <th>Akurasi Pengujian</th>
+                        <th>Weighted F1-Score</th>
+                        <th>Latency per Citra</th>
+                        <th>Ukuran Sampel</th>
+                    </tr>
+                </thead>
+                <tbody>
+        """)
         for _, row in df_metrics.iterrows():
             rest = str(row.get('restoration', 'ssr')).upper()
             enh = str(row.get('enhancement', 'clahe')).upper()
@@ -485,7 +504,7 @@ if uploaded_file is None:
             except Exception:
                 samples_str = "N/A"
                 
-            table_html += f"""
+            table_html += textwrap.dedent(f"""\
                 <tr>
                     <td><b>Skenario {row.get('scenario_id', 'N/A')}</b></td>
                     <td>{row.get('model', 'N/A')}</td>
@@ -495,7 +514,7 @@ if uploaded_file is None:
                     <td>{lat_str}</td>
                     <td>{samples_str}</td>
                 </tr>
-            """
+            """)
         table_html += "</tbody></table>"
         st.markdown(table_html, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
@@ -579,7 +598,6 @@ else:
         # 2. Layout: Preprocessing Steps (Full Width)
         st.markdown('<div class="section-header">1. Digital Image Processing (DIP) Pipeline Stages</div>', unsafe_allow_html=True)
         
-        st.markdown('<div class="saas-card">', unsafe_allow_html=True)
         p_col1, p_col2, p_col3, p_col4, p_col5 = st.columns(5)
         with p_col1:
             st.markdown('<div class="dip-step-card"><div class="dip-step-title">1. Resized</div></div>', unsafe_allow_html=True)
@@ -601,7 +619,6 @@ else:
             st.markdown('<div class="dip-step-card"><div class="dip-step-title">5. Segmented</div></div>', unsafe_allow_html=True)
             st.image(img_segmented_rgb, use_container_width=True)
             st.caption("Final Output")
-        st.markdown('</div>', unsafe_allow_html=True)
             
         # 3. Model Inference Comparison (3 Columns cards)
         st.markdown('<div class="section-header">2. Multi-Model Inference Comparison</div>', unsafe_allow_html=True)
@@ -619,23 +636,26 @@ else:
         with m_col1:
             badge_class = "badge-fresh" if cnn_pred_class == "fresh" else "badge-rotten"
             st.markdown(f"""
-            <div class="saas-card" style="margin-bottom: 15px;">
-                <h4 style="margin-top:0; font-weight:700; color:#0f172a; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">MobileNetV2 (CNN)</h4>
-                <div style="margin-top: 10px;">
-                    <span class="badge {badge_class}">{cnn_pred_class}</span>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                    <div>
-                        <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Confidence</div>
-                        <div style="font-size: 1.4rem; font-weight:800; color:#0f172a; margin-top:4px;">{cnn_confidence:.2%}</div>
+            <div class="saas-card" style="margin-bottom: 0px;">
+                <div>
+                    <h4 class="card-title">MobileNetV2 (CNN)</h4>
+                    <div style="margin-top: 10px;">
+                        <span class="badge {badge_class}">{cnn_pred_class}</span>
                     </div>
-                    <div>
-                        <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Quality Score</div>
-                        <div style="font-size: 1.4rem; font-weight:800; color:#FF6B4A; margin-top:4px;">{quality_score:.1f}/10</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                        <div>
+                            <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Confidence</div>
+                            <div style="font-size: 1.4rem; font-weight:800; color:#0f172a; margin-top:4px;">{cnn_confidence:.2%}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Quality Score</div>
+                            <div style="font-size: 1.4rem; font-weight:800; color:#FF6B4A; margin-top:4px;">{quality_score:.1f}/10</div>
+                        </div>
                     </div>
                 </div>
-                <div style="margin-top:15px; font-size:0.75rem; color:#64748b; border-top:1px solid #f1f5f9; padding-top:8px;">
-                    Latency: <b style="color:#334155;">{cnn_time:.2f} ms</b>
+                <div style="margin-top: auto; padding-top: 15px; font-size: 0.75rem; color:#64748b; border-top:1px solid #f1f5f9; display: flex; justify-content: space-between;">
+                    <span>Latency:</span>
+                    <b style="color:#334155;">{cnn_time:.2f} ms</b>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -644,19 +664,22 @@ else:
         with m_col2:
             badge_class = "badge-fresh" if svm_pred_class == "fresh" else "badge-rotten"
             st.markdown(f"""
-            <div class="saas-card" style="margin-bottom: 15px;">
-                <h4 style="margin-top:0; font-weight:700; color:#0f172a; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">SVM (Classical ML)</h4>
-                <div style="margin-top: 10px;">
-                    <span class="badge {badge_class}">{svm_pred_class}</span>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px;">
-                    <div>
-                        <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Decision Score</div>
-                        <div style="font-size: 1.4rem; font-weight:800; color:#0f172a; margin-top:4px;">{svm_decision:.3f}</div>
+            <div class="saas-card" style="margin-bottom: 0px;">
+                <div>
+                    <h4 class="card-title">SVM (Classical ML)</h4>
+                    <div style="margin-top: 10px;">
+                        <span class="badge {badge_class}">{svm_pred_class}</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px;">
+                        <div>
+                            <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Decision Score</div>
+                            <div style="font-size: 1.4rem; font-weight:800; color:#0f172a; margin-top:4px;">{svm_decision:.3f}</div>
+                        </div>
                     </div>
                 </div>
-                <div style="margin-top:15px; font-size:0.75rem; color:#64748b; border-top:1px solid #f1f5f9; padding-top:8px;">
-                    Latency: <b style="color:#334155;">{svm_time:.2f} ms</b>
+                <div style="margin-top: auto; padding-top: 15px; font-size: 0.75rem; color:#64748b; border-top:1px solid #f1f5f9; display: flex; justify-content: space-between;">
+                    <span>Latency:</span>
+                    <b style="color:#334155;">{svm_time:.2f} ms</b>
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -665,19 +688,22 @@ else:
         with m_col3:
             badge_class = "badge-fresh" if rf_pred_class == "fresh" else "badge-rotten"
             st.markdown(f"""
-            <div class="saas-card" style="margin-bottom: 15px;">
-                <h4 style="margin-top:0; font-weight:700; color:#0f172a; border-bottom:1px solid #f1f5f9; padding-bottom:8px;">Random Forest (Classical ML)</h4>
-                <div style="margin-top: 10px;">
-                    <span class="badge {badge_class}">{rf_pred_class}</span>
-                </div>
-                <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px;">
-                    <div>
-                        <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Confidence</div>
-                        <div style="font-size: 1.4rem; font-weight:800; color:#0f172a; margin-top:4px;">{rf_confidence:.2%}</div>
+            <div class="saas-card" style="margin-bottom: 0px;">
+                <div>
+                    <h4 class="card-title">Random Forest (Classical ML)</h4>
+                    <div style="margin-top: 10px;">
+                        <span class="badge {badge_class}">{rf_pred_class}</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px;">
+                        <div>
+                            <div style="font-size: 0.75rem; color:#94a3b8; text-transform:uppercase; font-weight:600;">Confidence</div>
+                            <div style="font-size: 1.4rem; font-weight:800; color:#0f172a; margin-top:4px;">{rf_confidence:.2%}</div>
+                        </div>
                     </div>
                 </div>
-                <div style="margin-top:15px; font-size:0.75rem; color:#64748b; border-top:1px solid #f1f5f9; padding-top:8px;">
-                    Latency: <b style="color:#334155;">{rf_time:.2f} ms</b>
+                <div style="margin-top: auto; padding-top: 15px; font-size: 0.75rem; color:#64748b; border-top:1px solid #f1f5f9; display: flex; justify-content: space-between;">
+                    <span>Latency:</span>
+                    <b style="color:#334155;">{rf_time:.2f} ms</b>
                 </div>
             </div>
             """, unsafe_allow_html=True)
