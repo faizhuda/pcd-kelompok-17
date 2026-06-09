@@ -1,4 +1,6 @@
 import sys
+import io
+import base64
 import textwrap
 import time
 from pathlib import Path
@@ -427,9 +429,6 @@ if uploaded_file is None:
         df_metrics = pd.concat(metrics_list, ignore_index=True)
         
         # Performance Charts Column
-        st.markdown('<div class="saas-card">', unsafe_allow_html=True)
-        st.markdown("<h4 style='margin-top:0; font-weight:700; color:#0f172a; margin-bottom: 15px;'>Model Performance Comparison Charts</h4>", unsafe_allow_html=True)
-        
         fig, axes = plt.subplots(1, 3, figsize=(15, 4.5))
         sns.set_theme(style="white")
         accent_color = "#FF6B4A"
@@ -471,27 +470,37 @@ if uploaded_file is None:
             ax.tick_params(axis='both', colors='#475569', labelsize=9)
             
         plt.tight_layout()
-        st.pyplot(fig)
-        st.markdown('</div>', unsafe_allow_html=True)
         
-        # Comparison Table
-        st.markdown('<div class="saas-card">', unsafe_allow_html=True)
-        st.markdown("<h4 style='margin-top:0; font-weight:700; color:#0f172a; margin-bottom: 15px;'>Model Performance Comparison Table</h4>", unsafe_allow_html=True)
+        # Save matplotlib figure to base64
+        charts_buf = io.BytesIO()
+        fig.savefig(charts_buf, format="png", bbox_inches="tight", dpi=150)
+        charts_buf.seek(0)
+        charts_base64 = f"data:image/png;base64,{base64.b64encode(charts_buf.read()).decode()}"
+        plt.close(fig)
+        
+        st.markdown(f"""
+        <div class="saas-card">
+            <h4 style="margin-top:0; font-weight:700; color:#0f172a; margin-bottom: 15px;">Model Performance Comparison Charts</h4>
+            <img src="{charts_base64}" style="width: 100%; border-radius: 8px;" />
+        </div>
+        """, unsafe_allow_html=True)
         
         table_html = textwrap.dedent("""\
-            <table class="styled-table">
-                <thead>
-                    <tr>
-                        <th>Model Skenario</th>
-                        <th>Tipe Model</th>
-                        <th>Pra-proses Citra</th>
-                        <th>Akurasi Pengujian</th>
-                        <th>Weighted F1-Score</th>
-                        <th>Latency per Citra</th>
-                        <th>Ukuran Sampel</th>
-                    </tr>
-                </thead>
-                <tbody>
+            <div class="saas-card">
+                <h4 style="margin-top:0; font-weight:700; color:#0f172a; margin-bottom: 15px;">Model Performance Comparison Table</h4>
+                <table class="styled-table">
+                    <thead>
+                        <tr>
+                            <th>Model Skenario</th>
+                            <th>Tipe Model</th>
+                            <th>Pra-proses Citra</th>
+                            <th>Akurasi Pengujian</th>
+                            <th>Weighted F1-Score</th>
+                            <th>Latency per Citra</th>
+                            <th>Ukuran Sampel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
         """)
         for _, row in df_metrics.iterrows():
             rest = str(row.get('restoration', 'ssr')).upper()
@@ -534,9 +543,8 @@ if uploaded_file is None:
                     <td>{samples_str}</td>
                 </tr>
             """)
-        table_html += "</tbody></table>"
+        table_html += "</tbody></table></div>"
         st.markdown(table_html, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
     else:
         st.warning("Data metrik hasil pengujian tidak ditemukan di folder results/metrics/.")
 
@@ -733,17 +741,28 @@ else:
                     overlay = cv2.addWeighted(img_u8, 0.65, heatmap_color, 0.35, 0)
                     overlay_rgb = cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB)
                     
+                    # Convert images to base64 for inline HTML rendering inside cards
+                    _, buffer1 = cv2.imencode('.png', cv2.cvtColor(img_segmented_rgb, cv2.COLOR_RGB2BGR))
+                    img_segmented_base64 = f"data:image/png;base64,{base64.b64encode(buffer1).decode()}"
+                    
+                    _, buffer2 = cv2.imencode('.png', cv2.cvtColor(overlay_rgb, cv2.COLOR_RGB2BGR))
+                    overlay_base64 = f"data:image/png;base64,{base64.b64encode(buffer2).decode()}"
+                    
                     g_col1, g_col2 = st.columns(2)
                     with g_col1:
-                        st.markdown('<div class="saas-card" style="text-align: center;">', unsafe_allow_html=True)
-                        st.markdown("<h5>Segmented Input (MobileNetV2 Input)</h5>", unsafe_allow_html=True)
-                        st.image(img_segmented_rgb, use_container_width=True)
-                        st.markdown('</div>', unsafe_allow_html=True)
+                        st.markdown(f"""
+                        <div class="saas-card" style="text-align: center;">
+                            <h5 style="margin-top: 0; font-weight: 700; color: #0f172a; margin-bottom: 15px;">Segmented Input (MobileNetV2 Input)</h5>
+                            <img src="{img_segmented_base64}" style="width: 100%; border-radius: 8px;" />
+                        </div>
+                        """, unsafe_allow_html=True)
                     with g_col2:
-                        st.markdown('<div class="saas-card" style="text-align: center;">', unsafe_allow_html=True)
-                        st.markdown("<h5>Grad-CAM Attention Heatmap</h5>", unsafe_allow_html=True)
-                        st.image(overlay_rgb, use_container_width=True)
-                        st.caption("Peta panas berwarna merah/jingga menunjukkan fitur citra yang menjadi fokus utama neural network dalam membedakan kualitas segar vs busuk.")
-                        st.markdown('</div>', unsafe_allow_html=True)
+                        st.markdown(f"""
+                        <div class="saas-card" style="text-align: center;">
+                            <h5 style="margin-top: 0; font-weight: 700; color: #0f172a; margin-bottom: 15px;">Grad-CAM Attention Heatmap</h5>
+                            <img src="{overlay_base64}" style="width: 100%; border-radius: 8px;" />
+                            <p style="font-size: 0.8rem; color: #64748b; margin-top: 10px; line-height: 1.4; text-align: left;">Peta panas berwarna merah/jingga menunjukkan fitur citra yang menjadi fokus utama neural network dalam membedakan kualitas segar vs busuk.</p>
+                        </div>
+                        """, unsafe_allow_html=True)
                 except Exception as e:
                     st.warning(f"Grad-CAM could not be generated: {e}")
