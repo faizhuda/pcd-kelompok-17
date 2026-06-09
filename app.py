@@ -358,7 +358,7 @@ else:
             
         with col4:
             st.markdown('<div class="dip-step-card"><div class="dip-step-title">Otsu Fruit Mask</div></div>', unsafe_allow_html=True)
-            st.image(mask, use_container_width=True, cmap="gray")
+            st.image(mask, use_container_width=True)
             st.caption(f"Obj ratio: {obj_ratio:.2%}")
             
         with col5:
