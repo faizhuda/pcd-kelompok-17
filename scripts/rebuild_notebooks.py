@@ -1419,7 +1419,7 @@ nb03 = make_nb(
         md_cell("## Skenario 10: CNN - SSR + E* + Segmentasi (mirror S5)"),
         md_cell("### Stage 1 - Base frozen (20 epoch)"),
         code_cell(
-            "model_s10 = build_mobilenetv2(num_classes=2)\n"
+            "model_s10 = build_mobilenetv2(num_classes=2, use_augmentation=True)\n"
             "model_s10 = compile_mobilenet(model_s10, learning_rate=1e-4)\n"
             'cb_s10 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s10_stage1.keras"))\n'
             "\n"
@@ -1517,7 +1517,7 @@ nb03 = make_nb(
         md_cell("## Skenario 11: CNN - Tanpa Restorasi, Tanpa Enhancement (mirror S1)"),
         md_cell("### Stage 1 - Base frozen (20 epoch)"),
         code_cell(
-            "model_s11 = build_mobilenetv2(num_classes=2)\n"
+            "model_s11 = build_mobilenetv2(num_classes=2, use_augmentation=True)\n"
             "model_s11 = compile_mobilenet(model_s11, learning_rate=1e-4)\n"
             'cb_s11 = get_mobilenet_callbacks(str(paths["models"] / "mobilenetv2_s11_stage1.keras"))\n'
             "\n"
@@ -1584,6 +1584,17 @@ nb03 = make_nb(
             "infer_ms = (time.perf_counter() - t0) * 1000 / max(n, 1)\n"
             "y_true_s11 = np.array(y_true_list)\n"
             "y_pred_s11 = np.array(y_pred_list)\n"
+            "# Simpan hasil prediksi S11 untuk perbandingan komoditas di nb04\n"
+            "valid_rows_s11 = [\n"
+            "    row for _, row in test_df.iterrows()\n"
+            "    if process_image(row['filepath'], restoration='none', enhancement='none', do_segment=False)['img'] is not None\n"
+            "]\n"
+            "if len(valid_rows_s11) == len(y_pred_s11):\n"
+            "    pred_df_s11 = pd.DataFrame(valid_rows_s11).reset_index(drop=True)\n"
+            "    pred_df_s11['pred'] = y_pred_s11\n"
+            "    pred_df_s11.to_csv(paths['metrics'] / 'predictions_s11.csv', index=False)\n"
+            "else:\n"
+            "    print(f'[WARN] predictions_s11 dilewati: {len(valid_rows_s11)} baris vs {len(y_pred_s11)} prediksi')\n"
             "metrics_s11 = compute_metrics(y_true_s11, y_pred_s11)\n"
             "save_scenario_metrics(\n"
             '    11, "none", False, "cnn", "MobileNetV2",\n'
@@ -1800,42 +1811,68 @@ nb04 = make_nb(
         code_cell(
             's5_pred_path = metrics_dir / "predictions_s5.csv"\n'
             's10_pred_path = metrics_dir / "predictions_s10.csv"\n'
+            's11_pred_path = metrics_dir / "predictions_s11.csv"\n'
             "\n"
-            "if s5_pred_path.exists() and s10_pred_path.exists():\n"
-            "    from sklearn.metrics import f1_score\n"
+            "dfs_comm = []\n"
+            "from sklearn.metrics import f1_score\n"
+            'label_map = {"fresh": 0, "rotten": 1}\n'
+            "\n"
+            "if s5_pred_path.exists():\n"
             "    s5_preds = pd.read_csv(s5_pred_path)\n"
-            "    s10_preds = pd.read_csv(s10_pred_path)\n"
-            '    label_map = {"fresh": 0, "rotten": 1}\n'
             '    s5_preds["true_encoded"] = s5_preds["label"].map(label_map)\n'
-            '    s10_preds["true_encoded"] = s10_preds["label"].map(label_map)\n'
             "    s5_comm = []\n"
             '    for comm, group in s5_preds.groupby("commodity"):\n'
             '        f1 = f1_score(group["true_encoded"], group["pred"], average="weighted", zero_division=0)\n'
             '        s5_comm.append({"commodity": comm, "samples": len(group), "f1_s5": f1})\n'
-            "    df_s5_comm = pd.DataFrame(s5_comm)\n"
+            "    dfs_comm.append(pd.DataFrame(s5_comm))\n"
+            "\n"
+            "if s10_pred_path.exists():\n"
+            "    s10_preds = pd.read_csv(s10_pred_path)\n"
+            '    s10_preds["true_encoded"] = s10_preds["label"].map(label_map)\n'
             "    s10_comm = []\n"
             '    for comm, group in s10_preds.groupby("commodity"):\n'
             '        f1 = f1_score(group["true_encoded"], group["pred"], average="weighted", zero_division=0)\n'
             '        s10_comm.append({"commodity": comm, "f1_s10": f1})\n'
-            "    df_s10_comm = pd.DataFrame(s10_comm)\n"
-            '    df_compare = pd.merge(df_s5_comm, df_s10_comm, on="commodity").sort_values("f1_s10", ascending=False)\n'
+            "    dfs_comm.append(pd.DataFrame(s10_comm))\n"
+            "\n"
+            "if s11_pred_path.exists():\n"
+            "    s11_preds = pd.read_csv(s11_pred_path)\n"
+            '    s11_preds["true_encoded"] = s11_preds["label"].map(label_map)\n'
+            "    s11_comm = []\n"
+            '    for comm, group in s11_preds.groupby("commodity"):\n'
+            '        f1 = f1_score(group["true_encoded"], group["pred"], average="weighted", zero_division=0)\n'
+            '        s11_comm.append({"commodity": comm, "f1_s11": f1})\n'
+            "    dfs_comm.append(pd.DataFrame(s11_comm))\n"
+            "\n"
+            "if len(dfs_comm) > 0:\n"
+            '    df_compare = dfs_comm[0]\n'
+            "    for df in dfs_comm[1:]:\n"
+            '        df_compare = pd.merge(df_compare, df, on="commodity")\n'
+            "    \n"
+            "    # Sort by the best available model's F1\n"
+            '    sort_col = "f1_s11" if "f1_s11" in df_compare.columns else ("f1_s10" if "f1_s10" in df_compare.columns else "f1_s5")\n'
+            "    df_compare = df_compare.sort_values(sort_col, ascending=False)\n"
             "    display(df_compare)\n"
-            "    df_melted = df_compare.melt(id_vars=[\"commodity\", \"samples\"], value_vars=[\"f1_s5\", \"f1_s10\"],\n"
+            "    \n"
+            "    value_vars = [c for c in [\"f1_s5\", \"f1_s10\", \"f1_s11\"] if c in df_compare.columns]\n"
+            "    df_melted = df_compare.melt(id_vars=[\"commodity\", \"samples\"], value_vars=value_vars,\n"
             '                                var_name="model", value_name="f1_score")\n'
-            '    df_melted["model"] = df_melted["model"].map({"f1_s5": "S5 SVM", "f1_s10": "S10 CNN"})\n'
-            "    fig, ax = plt.subplots(figsize=(12, 5))\n"
+            '    df_melted["model"] = df_melted["model"].map({"f1_s5": "S5 SVM", "f1_s10": "S10 CNN (Pipeline)", "f1_s11": "S11 CNN (Raw)"})\n'
+            "    \n"
+            "    fig, ax = plt.subplots(figsize=(14, 6))\n"
             '    sns.barplot(data=df_melted, x="commodity", y="f1_score", hue="model", ax=ax)\n'
-            '    ax.set_title("F1-Score per Komoditas (S5 SVM vs S10 CNN)")\n'
+            '    ax.set_title("F1-Score per Komoditas (Perbandingan Model)")\n'
             '    ax.set_ylabel("Weighted F1-Score")\n'
             '    ax.set_xlabel("Komoditas")\n'
             "    ax.set_ylim(0, 1.05)\n"
             "    plt.xticks(rotation=45, ha='right')\n"
             "    plt.grid(axis='y', linestyle='--', alpha=0.7)\n"
+            "    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')\n"
             "    plt.tight_layout()\n"
-            '    plt.savefig(paths["figures"] / "commodity_comparison.png", dpi=150)\n'
+            '    plt.savefig(paths["figures"] / "commodity_comparison.png", dpi=150, bbox_inches="tight")\n'
             "    plt.show()\n"
             "else:\n"
-            '    print("Prediksi S5 atau S10 belum lengkap. Lewati perbandingan komoditas.")\n'
+            '    print("Tidak ada data prediksi S5, S10, atau S11 yang ditemukan.")\n'
         ),
     ]
 )

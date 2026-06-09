@@ -71,7 +71,11 @@ def get_class_weights(y_train: np.ndarray) -> dict[int, float]:
     return {int(c): float(w) for c, w in zip(classes, weights)}
 
 
-def build_mobilenetv2(num_classes: int = 2, input_shape: tuple[int, int, int] = (224, 224, 3)) -> Any:
+def build_mobilenetv2(
+    num_classes: int = 2,
+    input_shape: tuple[int, int, int] = (224, 224, 3),
+    use_augmentation: bool = False,
+) -> Any:
     """
     MobileNetV2 transfer learning model with frozen base.
     Output: num_classes with softmax (default 2: fresh/rotten).
@@ -86,7 +90,13 @@ def build_mobilenetv2(num_classes: int = 2, input_shape: tuple[int, int, int] = 
     base.trainable = False
 
     inputs = tf.keras.Input(shape=input_shape)
-    x = base(inputs, training=False)
+    x = inputs
+    if use_augmentation:
+        x = tf.keras.layers.RandomFlip("horizontal")(x)
+        x = tf.keras.layers.RandomRotation(0.15)(x)
+        x = tf.keras.layers.RandomZoom(0.1)(x)
+
+    x = base(x, training=False)
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
     x = tf.keras.layers.Dense(128, activation="relu")(x)
     x = tf.keras.layers.Dropout(0.3)(x)
