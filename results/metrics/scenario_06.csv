@@ -1,2 +1,2 @@
 scenario_id,restoration,enhancement,segmentation,features,model,accuracy,precision_weighted,recall_weighted,f1_weighted,inference_time_ms_per_image,n_test_samples
-6,ssr,gamma,True,color,SVM,0.8315874294923449,0.8336576788852237,0.8315874294923449,0.8313190788833403,0.7064532892825232,1241
+6,ssr,gamma,True,color,SVM,0.8328398997950353,0.8327541620140747,0.8328398997950353,0.832752620263979,0.6897626419949845,4391
