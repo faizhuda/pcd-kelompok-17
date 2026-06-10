@@ -120,11 +120,16 @@ def append_significance_test(
     conclusion: str,
     metrics_dir: str | Path,
 ) -> None:
-    """Append one McNemar result to significance_tests.csv."""
+    """Upsert one McNemar result into significance_tests.csv.
+
+    If a row with the same ``comparison`` key already exists it is replaced,
+    otherwise a new row is appended.  This makes the function safe to call on
+    every notebook re-run without accumulating duplicates.
+    """
     out_dir = Path(metrics_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / "significance_tests.csv"
-    row = pd.DataFrame(
+    new_row = pd.DataFrame(
         [
             {
                 "comparison": comparison,
@@ -137,9 +142,12 @@ def append_significance_test(
         ]
     )
     if path.exists():
-        row.to_csv(path, mode="a", header=False, index=False)
+        existing = pd.read_csv(path)
+        # Drop any existing row with the same comparison key, then append new row.
+        existing = existing[existing["comparison"] != comparison]
+        pd.concat([existing, new_row], ignore_index=True).to_csv(path, index=False)
     else:
-        row.to_csv(path, index=False)
+        new_row.to_csv(path, index=False)
 
 
 def print_summary_table(metrics_dir: str | Path = "results/metrics/") -> pd.DataFrame:
