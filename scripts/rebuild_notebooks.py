@@ -2300,10 +2300,10 @@ nb04 = make_nb(
 
 if __name__ == "__main__":
     for nb_data, fname in [
-        (nb01, "01_eda.ipynb"),
-        (nb02, "02_experiments_classical.ipynb"),
-        (nb03, "03_experiments_cnn.ipynb"),
-        (nb04, "04_results_summary.ipynb"),
+        (nb01, "01-eda.ipynb"),
+        (nb02, "02-classical.ipynb"),
+        (nb03, "03-cnn.ipynb"),
+        (nb04, "04-evaluation.ipynb"),
     ]:
         out_path = NOTEBOOKS_DIR / fname
         with open(out_path, "w", encoding="utf-8") as f:
