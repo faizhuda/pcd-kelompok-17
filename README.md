@@ -87,7 +87,7 @@ CI otomatis berjalan di setiap push via GitHub Actions (`.github/workflows/ci.ym
 src/           # Fungsi pipeline murni (tanpa side-effect I/O)
 notebooks/     # Orchestration & visualisasi (Kaggle-ready)
 tests/         # Unit tests (pytest)
-scripts/       # Utilities (sample data, smoke test, rebuild notebooks)
+scripts/       # Utilities (sample data, smoke test)
 data/raw/      # Dataset asli (read-only, tidak di-commit)
 data/processed/# Cache fitur opsional (dapat di-regenerate)
 results/       # Metrik CSV, model .pkl/.keras, figure PNG
