@@ -1,2 +1,2 @@
 scenario_id,restoration,enhancement,segmentation,features,model,accuracy,precision_weighted,recall_weighted,f1_weighted,inference_time_ms_per_image,n_test_samples
-11,none,none,False,cnn,MobileNetV2,0.987938097405553,0.987965752375415,0.987938097405553,0.9879403815497665,12.726812383705122,4394
+11,none,none,False,cnn,MobileNetV2,0.9870189023001594,0.987062699762137,0.9870189023001594,0.9870222657764871,11.138902728991095,4391

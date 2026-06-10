@@ -1,1 +1,1 @@
-clahe
+gamma
