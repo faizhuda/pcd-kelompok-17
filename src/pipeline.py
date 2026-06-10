@@ -88,17 +88,19 @@ def log_segmentation_failure(
     object_ratio: float,
     log_path: Path,
 ) -> None:
-    """Append one row to segmentation_failures.csv."""
+    """Upsert one row into segmentation_failures.csv (keyed by filepath)."""
     import pandas as pd
 
-    row = pd.DataFrame(
+    new_row = pd.DataFrame(
         [{"filepath": filepath, "commodity": commodity, "label": label, "object_ratio": object_ratio}]
     )
     log_path.parent.mkdir(parents=True, exist_ok=True)
     if log_path.exists():
-        row.to_csv(log_path, mode="a", header=False, index=False)
+        existing = pd.read_csv(log_path)
+        existing = existing[existing["filepath"] != filepath]
+        pd.concat([existing, new_row], ignore_index=True).to_csv(log_path, index=False)
     else:
-        row.to_csv(log_path, index=False)
+        new_row.to_csv(log_path, index=False)
 
 
 def batch_extract_features(
