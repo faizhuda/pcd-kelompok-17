@@ -675,12 +675,12 @@ segmentasi) dan uji McNemar tidak signifikan (p~0.21)."""
         ),
         code_cell(
             """\
-# Use E*='clahe' as a stand-in for visualization (actual E* resolved at runtime in nb02)
+# Use E*='gamma' for visualization (confirmed by nb02; gamma won over clahe/none on val F1)
 fig, axes = plt.subplots(2, 4, figsize=(16, 8))
 for row, (fp, label) in enumerate([(fp_fresh, "Fresh"), (fp_rotten, "Rotten")]):
     img_bgr  = cv2.imread(fp)
     ssr_img  = preprocess_from_array(img_bgr, apply_restoration=True)
-    enhanced = apply_enhancement(ssr_img, "clahe")
+    enhanced = apply_enhancement(ssr_img, "gamma")
     masked, binary_mask, obj_ratio, used_fallback = segment_fruit(enhanced)
     ratio_note = "[FALLBACK] " if used_fallback else ""
     columns = [
@@ -1198,7 +1198,7 @@ nb02 = make_nb(
             "\n"
             "SVM & Random Forest dengan feature engineering manual. Tiap skenario\n"
             "mengubah **satu variabel** untuk isolasi efek (restorasi, enhancement,\n"
-            "segmentasi, fitur, classifier). Jalankan **berurutan** setelah `01_eda.ipynb`."
+            "segmentasi, fitur, classifier). Jalankan **berurutan** setelah `01-eda.ipynb`."
         ),
         KAGGLE_SETUP,
         code_cell(
@@ -1217,7 +1217,7 @@ nb02 = make_nb(
             "train, val, test = make_splits(build_dataset_index(RAW_DATA_DIR))\n"
             "\n"
             "# Stratified sub-sampling untuk memotong running time klasifikasi klasik (S1-S9)\n"
-            "# dari 5 jam menjadi ~15 menit. Pola perbandingan relatif antar-skenario tetap konsisten.\n"
+            "# dari ~5 jam (full dataset) menjadi ~1 jam. Pola perbandingan relatif antar-skenario tetap konsisten.\n"
             "def sub_sample(df, max_per_group):\n"
             "    return (\n"
             "        df.groupby(['commodity', 'label'], group_keys=False)\n"
