@@ -134,7 +134,7 @@ NEW_ROOT = (
 
 
 # ==========================================================================
-# 01_eda.ipynb
+# 01-eda.ipynb
 # ==========================================================================
 nb01 = make_nb(
     [
@@ -1189,7 +1189,7 @@ print(f"\\n{'[OK] Tidak ada data leakage!' if all_ok else '[FAIL] TERDAPAT DATA 
 
 
 # ==========================================================================
-# 02_experiments_classical.ipynb
+# 02-classical.ipynb
 # ==========================================================================
 nb02 = make_nb(
     [
@@ -1368,7 +1368,7 @@ nb02 = make_nb(
 
 
 # ==========================================================================
-# 03_experiments_cnn.ipynb
+# 03-cnn.ipynb
 # ==========================================================================
 nb03 = make_nb(
     [
@@ -1742,7 +1742,7 @@ nb03 = make_nb(
 
 
 # ==========================================================================
-# 04_results_summary.ipynb
+# 04-evaluation.ipynb
 # ==========================================================================
 nb04 = make_nb(
     [
@@ -1815,7 +1815,7 @@ nb04 = make_nb(
             "1. **S1 (baseline mentah) sudah sangat tinggi** - Ini bukan anomali. EDA (nb01)\n"
             "   menunjukkan distribusi Hue fresh vs rotten berbeda secara statistik (Cohen's d tinggi\n"
             "   pada sebagian besar komoditas), artinya sinyal warna alami sudah cukup diskriminatif\n"
-            "   untuk SVM dengan histogram fitur 256-bin.\n"
+            "   untuk SVM dengan histogram fitur 64-bin.\n"
             "\n"
             "2. **S2 < S1 (SSR menurunkan F1)** - Ini adalah temuan paling kontra-intuitif.\n"
             "   SSR dirancang untuk menormalkan pencahayaan, tapi justru menghapus variasi\n"
@@ -2334,7 +2334,7 @@ nb04 = make_nb(
             "\n"
             "**1. Sinyal warna alami sudah sangat kuat (S1 baseline tinggi)**\n"
             "Dataset buah/sayur fresh vs rotten memiliki perbedaan hue yang konsisten:\n"
-            "rotten cenderung lebih kecoklatan/gelap. SVM dengan 256-bin HSV histogram\n"
+            "rotten cenderung lebih kecoklatan/gelap. SVM dengan 64-bin HSV histogram\n"
             "sudah menangkap sinyal ini tanpa preprocessing apapun.\n"
             "\n"
             "**2. SSR adalah trade-off negatif untuk dataset ini (S2 < S1)**\n"
@@ -2345,7 +2345,7 @@ nb04 = make_nb(
             "\n"
             "**3. Segmentasi Otsu tidak efektif untuk dataset ini (S5 ~ E*)**\n"
             "Foreground ratio ~100% pada hampir semua gambar membuat mask tidak memisahkan\n"
-            "objek dari background. Penyebab: SSR+CLAHE meningkatkan saturasi sehingga\n"
+            "objek dari background. Penyebab: SSR+enhancement meningkatkan saturasi sehingga\n"
             "operasi OR(mask_saturation, mask_grayscale) mencakup seluruh frame.\n"
             "Implikasi: fitur shape (S8) tidak berguna karena shape identik untuk semua gambar.\n"
             "\n"

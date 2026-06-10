@@ -16,7 +16,7 @@ SEGMENTATION_FALLBACK_RATIO: float = 0.05
 #   - features:     S5 (all) vs S6 (color) vs S7 (texture) vs S8 (shape) -> which features matter
 #   - classifier:   S5 (SVM) vs S9 (RF)                            -> model choice
 # "enhancement": "best" is resolved at runtime from results/metrics/best_enhancement.txt.
-# CNN scenarios (10 segmented+E*, 11 raw) are handled in notebooks/03_experiments_cnn.ipynb.
+# CNN scenarios (10 segmented+E*, 11 raw) are handled in notebooks/03-cnn.ipynb.
 SCENARIO_CONFIG: dict[int, dict[str, Any]] = {
     1: {"restoration": "none", "enhancement": "none",  "segment": False, "features": "all", "model": "svm"},
     2: {"restoration": "ssr",  "enhancement": "none",  "segment": False, "features": "all", "model": "svm"},

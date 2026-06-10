@@ -142,7 +142,7 @@ def run_classical_scenario(
         8  SSR + E* + segmentation + shape only, SVM
         9  SSR + E* + segmentation + all features, RF   <- feature importance
 
-    CNN scenarios (10-11, MobileNetV2) are handled in notebooks/03_experiments_cnn.ipynb.
+    CNN scenarios (10-11, MobileNetV2) are handled in notebooks/03-cnn.ipynb.
 
     Raises:
         KeyError: if scenario_id is not in SCENARIO_CONFIG.
@@ -154,7 +154,7 @@ def run_classical_scenario(
         raise KeyError(
             f"scenario_id={scenario_id!r} not found. "
             f"Classical scenarios are {valid[0]}-{valid[-1]}. "
-            "CNN scenarios are run directly in notebooks/03_experiments_cnn.ipynb."
+            "CNN scenarios are run directly in notebooks/03-cnn.ipynb."
         )
 
     cfg = SCENARIO_CONFIG[scenario_id].copy()

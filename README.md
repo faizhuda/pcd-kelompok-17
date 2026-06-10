@@ -9,7 +9,7 @@ Pipeline mencakup 11 skenario eksperimen: S1-S9 (klasik) dan S10-S11 (CNN).
 ## Jalankan di Kaggle Notebooks (Rekomendasi)
 
 Semua notebook sudah dilengkapi **setup cell otomatis untuk Kaggle** (clone repo +
-deteksi dataset, nol konfigurasi). Panduan lengkap: **[KAGGLE_PLAN.md](KAGGLE_PLAN.md)**.
+deteksi dataset, nol konfigurasi).
 
 ### Persiapan (sekali, oleh koordinator)
 - Pastikan repo GitHub ini **public**.
@@ -31,10 +31,10 @@ deteksi dataset, nol konfigurasi). Panduan lengkap: **[KAGGLE_PLAN.md](KAGGLE_PL
 
 | # | Notebook | Accelerator | Estimasi | Menghasilkan |
 |---|----------|-------------|----------|--------------|
-| 1 | `01_eda.ipynb` | CPU | ~20 menit | EDA + split (deterministik) |
-| 2 | `02_experiments_classical.ipynb` | CPU | ~15-20 menit | `scenario_01-09.csv`, model `svm_scenario_05.pkl` & `rf_scenario_09.pkl` |
-| 3 | `03_experiments_cnn.ipynb` | **GPU P100** | ~1-1.5 jam | `scenario_10-11.csv`, model `mobilenetv2_s10_stage2.keras` & `mobilenetv2_s11_stage2.keras` |
-| 4 | `04_results_summary.ipynb` | CPU | ~5 menit | Tabel 3, semua plot |
+| 1 | `01-eda.ipynb` | CPU | ~15 menit | EDA + split (deterministik) |
+| 2 | `02-classical.ipynb` | CPU | ~2 jam | `scenario_01.csv`–`scenario_09.csv`, model `svm_scenario_05.pkl` & `rf_scenario_09.pkl` |
+| 3 | `03-cnn.ipynb` | **GPU P100** | ~2-2.5 jam | `scenario_10.csv`–`scenario_11.csv`, model `mobilenetv2_s10_stage2.keras` & `mobilenetv2_s11_stage2.keras` |
+| 4 | `04-evaluation.ipynb` | CPU | ~5 menit | Tabel ringkasan, semua plot |
 
 > **Catatan:** Notebook 02 harus selesai sebelum 03 (butuh model S5); 03 sebelum 04.
 > Hand-off antar-notebook: **+ Add Data -> Your Work / Dataset bersama** (auto-restore
@@ -72,7 +72,7 @@ Untuk mengunduh dataset lengkap secara lokal, tambahkan API key Kaggle ke
 ## Testing & Linting
 
 ```bash
-pytest tests/ -v          # 64 unit tests
+pytest tests/ -v          # 66 unit tests
 python scripts/smoke_test.py   # integration smoke test (tanpa dataset)
 ruff check src/
 ```
@@ -90,5 +90,5 @@ tests/         # Unit tests (pytest)
 scripts/       # Utilities (sample data, smoke test, rebuild notebooks)
 data/raw/      # Dataset asli (read-only, tidak di-commit)
 data/processed/# Cache fitur opsional (dapat di-regenerate)
-results/       # Metrik CSV, model .pkl/.h5, figure PNG
+results/       # Metrik CSV, model .pkl/.keras, figure PNG
 ```
