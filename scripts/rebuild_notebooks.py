@@ -819,6 +819,10 @@ Di sini kita menguji hipotesis kelayakan awal secara kuantitatif bahwa SSR menor
 Kita mengukur nilai rata-rata L sebelum dan sesudah SSR untuk memproyeksikan secara statistik
 (dengan t-test independen) apakah SSR memperkecil gap perbedaan kecerahan yang sebenarnya merupakan
 fitur diskriminatif alami bagi classifier, sehingga berpotensi menurunkan performa model.
+
+> **Konfirmasi eksperimen (nb02):** Hipotesis ini terbukti — S2 (SSR) menghasilkan F1=0.859,
+> lebih rendah dari S1 baseline (F1=0.900). Uji McNemar mengkonfirmasi perbedaan ini
+> signifikan (p=0.042). SSR memang membuang sinyal kecerahan yang diskriminatif.
 """
         ),
         code_cell(
@@ -1749,8 +1753,8 @@ nb04 = make_nb(
             "analisis mendalam terhadap setiap tahap pipeline preprocessing.\n"
             "Setiap bagian dilengkapi narasi interpretasi untuk memudahkan penulisan laporan.\n"
             "\n"
-            "**Urutan eksekusi:** Jalankan setelah `02_experiments_classical.ipynb` dan\n"
-            "`03_experiments_cnn.ipynb` selesai. Notebook ini bersifat **read-only** terhadap\n"
+            "**Urutan eksekusi:** Jalankan setelah `02-classical.ipynb` dan\n"
+            "`03-cnn.ipynb` selesai. Notebook ini bersifat **read-only** terhadap\n"
             "hasil - tidak ada training ulang, hanya membaca CSV dan model yang sudah ada."
         ),
         KAGGLE_SETUP,
@@ -1976,26 +1980,36 @@ nb04 = make_nb(
         md_cell(
             "### Interpretasi Hasil McNemar\n"
             "\n"
-            "Tiga pasang hipotesis yang diuji:\n"
+            "Enam pasang uji dijalankan — 3 dari nb02 (efek pipeline klasik, n≈1241 sub-sampled)\n"
+            "dan 3 dari nb03 (CNN vs SVM, n=4391 full test):\n"
             "\n"
-            "**1. S2 vs S1 (efek SSR)**\n"
-            "- Jika p < 0.05: SSR secara signifikan **mengubah** pola kesalahan\n"
-            "- Arah perubahan: F1 S2 < S1, artinya SSR signifikan **memperburuk** performa\n"
-            "- Mekanisme: SSR menormalkan variasi kecerahan alami (dikonfirmasi EDA Seksi C2)\n"
+            "**1. S2 vs S1 (efek SSR)** — **signifikan** (p=0.042)\n"
+            "SSR secara statistik mengubah pola kesalahan, dan arahnya negatif: F1 S2 < S1.\n"
+            "Mekanisme: SSR menormalkan variasi kecerahan alami yang justru menjadi sinyal\n"
+            "pembeda antara fresh (lebih cerah) dan rotten (lebih gelap/kecoklatan).\n"
             "\n"
-            "**2. S5 vs E* (efek segmentasi)**\n"
-            "- Jika p > 0.05: segmentasi **tidak signifikan** mengubah prediksi\n"
-            "- Penjelasan: mask Otsu ~100% foreground (EDA Seksi C1) -> segmentasi no-op\n"
-            "- Konsekuensi: fitur shape (S8) juga tidak berguna (mask identik antar gambar)\n"
+            "**2. E*(gamma) vs S2 (efek enhancement)** — **tidak signifikan** (p=0.914)\n"
+            "Gamma correction setelah SSR tidak mengubah pola kesalahan secara berarti.\n"
+            "Enhancement membantu sedikit secara numerik (F1 naik 0.004) tapi tidak signifikan.\n"
             "\n"
-            "**3. S10/S11 vs S5 (CNN vs SVM)**\n"
-            "- Jika p < 0.05: CNN secara signifikan lebih baik dari SVM terbaik\n"
-            "- CNN menangkap pola spasial dan tekstur hierarkis yang tidak bisa diwakili\n"
-            "  oleh histogram HSV/LBP/GLCM yang bersifat global/lokal statis\n"
+            "**3. S5 vs E*-noseg (efek segmentasi)** — **tidak signifikan** (p=0.310)\n"
+            "Segmentasi Otsu tidak mengubah prediksi. Penyebab: mask ~100% foreground\n"
+            "(EDA Seksi C1) membuat pipeline dengan/tanpa segmentasi menghasilkan citra identik.\n"
             "\n"
-            "> **Penting untuk laporan**: McNemar yang tidak signifikan (p > 0.05) BUKAN\n"
-            "> berarti kedua model sama bagusnya - bisa juga karena ukuran test set kecil\n"
-            "> (low statistical power). Selalu laporkan bersama ukuran efek."
+            "**4. S10 vs S5 (CNN pipeline vs SVM pipeline)** — **sangat signifikan** (p<1e-70)\n"
+            "CNN full pipeline melampaui SVM full pipeline secara dramatis.\n"
+            "\n"
+            "**5. S11 vs S1 (CNN raw vs SVM raw)** — **sangat signifikan** (p<1e-34)\n"
+            "Bahkan CNN tanpa preprocessing melampaui SVM tanpa preprocessing.\n"
+            "\n"
+            "**6. S10 vs S11 (CNN pipeline vs CNN raw)** — **signifikan** (p=1.2e-9)\n"
+            "CNN raw (S11) lebih baik dari CNN dengan preprocessing (S10). Ini mengkonfirmasi\n"
+            "bahwa pipeline SSR+segmentasi yang dirancang untuk SVM justru mengurangi\n"
+            "informasi yang bisa dimanfaatkan CNN.\n"
+            "\n"
+            "> **Catatan**: McNemar pair 1-3 diuji pada test sub-sampled (n≈1241);\n"
+            "> pair 4-6 diuji pada full test (n=4391). Perbedaan ukuran test ini perlu\n"
+            "> dicatat saat melaporkan hasil."
         ),
         # ---- Section 6: Feature Importance ----
         md_cell(
@@ -2083,18 +2097,32 @@ nb04 = make_nb(
         md_cell(
             "### Catatan Inference Time\n"
             "\n"
-            "SVM dan RF jauh lebih cepat dari CNN karena tidak membutuhkan forward pass\n"
-            "jaringan dalam. Namun keduanya masih membutuhkan preprocessing (SSR + feature\n"
-            "extraction) yang cukup berat. CNN modern dengan hardware acceleration (GPU/TPU)\n"
-            "bisa lebih kompetitif dalam deployment dibanding angka benchmark CPU ini."
+            "Beberapa poin penting dari grafik:\n"
+            "\n"
+            "- **RF (S9) adalah yang tercepat: ~0.013 ms/image** — sekitar 55× lebih cepat\n"
+            "  dari SVM (~0.7 ms). RF tidak memerlukan kernel matrix computation seperti SVM.\n"
+            "\n"
+            "- **S1 (SVM raw) tidak pakai SSR/preprocessing** — inference time-nya (~0.56 ms)\n"
+            "  mencerminkan feature extraction murni dari raw image, tanpa overhead SSR.\n"
+            "  Skenario S2-S9 yang menggunakan SSR sedikit lebih lambat karena retinex pass.\n"
+            "\n"
+            "- **CNN S11 (raw) dua kali lebih cepat dari S10 (pipeline)**: 11 ms vs 21 ms.\n"
+            "  Preprocessing SSR + segmentasi menambah ~10 ms overhead per gambar untuk CNN,\n"
+            "  sekaligus tidak meningkatkan—bahkan menurunkan—akurasi.\n"
+            "\n"
+            "- Angka ini diukur pada **CPU** (Kaggle non-GPU). Dengan GPU/TPU, CNN bisa\n"
+            "  jauh lebih kompetitif. Perbandingan fair deployment perlu mempertimbangkan\n"
+            "  hardware target."
         ),
         # ---- Section 8: Per-Commodity ----
         md_cell(
             "## 8. Analisis Performa Per-Komoditas\n"
             "\n"
-            "Analisis ini membandingkan F1-score per komoditas antara SVM terbaik (S5),\n"
-            "CNN full pipeline (S10), dan CNN raw (S11). Komoditas dengan F1 rendah\n"
-            "menunjukkan kasus yang secara visual sulit dibedakan fresh vs rotten."
+            "Analisis ini membandingkan F1-score per komoditas antara SVM full pipeline (S5),\n"
+            "CNN full pipeline (S10), dan CNN raw (S11). S5 dipilih sebagai wakil SVM\n"
+            "karena mewakili pipeline lengkap (SSR+gamma+seg+all features), bukan karena\n"
+            "F1-nya tertinggi di antara SVM (S1 raw justru lebih tinggi secara agregat).\n"
+            "Komoditas dengan F1 rendah menunjukkan kasus yang secara visual sulit dibedakan."
         ),
         code_cell(
             's5_pred_path = metrics_dir / "predictions_s5.csv"\n'
@@ -2290,10 +2318,13 @@ nb04 = make_nb(
             "Otsu pada kanal S (HSV) + grayscale + morfologi gagal pada buah gelap berlatar\n"
             "belakang serupa. Fallback (gambar penuh) dipakai saat foreground <5%.\n"
             "\n"
-            "### 5. Sub-sampling untuk classical ML\n"
-            "S1-S9 menggunakan sub-sample (150 per group train) bukan dataset penuh untuk\n"
-            "memangkas runtime. Pola relatif antar skenario tetap konsisten, tapi angka\n"
-            "absolut F1 bisa berbeda dari hasil full-dataset."
+            "### 5. Data train tidak seimbang antara SVM/RF dan CNN\n"
+            "S1-S9 dilatih pada **sub-sample** (150 gambar per grup = ~4.100 train), sedangkan\n"
+            "S10-S11 (CNN) dilatih pada **seluruh** training set (~20.000 gambar). Test set\n"
+            "sudah diseragamkan ke n=4391 full test untuk semua skenario, tapi perbedaan\n"
+            "volume data train membuat perbandingan F1 SVM vs CNN tidak sepenuhnya *fair*:\n"
+            "SVM mungkin bisa lebih tinggi jika dilatih pada data penuh.\n"
+            "- **Saran pengembangan**: latih S5/S9 pada full train set untuk perbandingan yang adil."
         ),
         # ---- Section 11: Final Conclusions ----
         md_cell(
@@ -2331,11 +2362,12 @@ nb04 = make_nb(
             "\n"
             "### Rekomendasi Sistem Optimal\n"
             "\n"
-            "| Konteks | Rekomendasi | Alasan |\n"
-            "|---------|-------------|--------|\n"
-            "| Edge device (CPU only) | SVM + Raw (S1) | F1 tinggi, inference cepat, no preprocessing |\n"
-            "| Mobile/Cloud (GPU) | CNN Raw (S11) | F1 tertinggi, pipeline paling sederhana |\n"
-            "| Interpretable (audit) | RF + Color only (S6/S9) | Feature importance tersedia |\n"
+            "| Konteks | Rekomendasi | F1 | Alasan |\n"
+            "|---------|-------------|-----|--------|\n"
+            "| Edge device (CPU only) | SVM + Raw (S1) | 0.900 | Inference ~0.56 ms, no preprocessing |\n"
+            "| Edge device, speed priority | RF + full pipeline (S9) | 0.872 | ~0.013 ms/img, 55× lebih cepat dari SVM |\n"
+            "| Mobile/Cloud (GPU) | CNN Raw (S11) | 0.987 | F1 tertinggi, pipeline paling sederhana |\n"
+            "| Interpretable (audit) | RF + All features (S9) | 0.872 | Feature importance tersedia |\n"
             "\n"
             "**Kesimpulan akhir:** Untuk dataset buah/sayur dengan kondisi foto terkontrol\n"
             "(latar putih/bersih), preprocessing kompleks (SSR + segmentasi) tidak memberikan\n"
